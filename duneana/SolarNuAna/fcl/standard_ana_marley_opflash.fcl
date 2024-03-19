@@ -1,0 +1,150 @@
+##include "OpFlashAnaDeco.fcl"
+#include "FlashMatchAna.fcl"
+#include "AnalysisTree.fcl"
+##include "PhotoVisDump.fcl" //fcl mapa luz
+#include "trackfindermodules.fcl"
+#include "showerfindermodules.fcl"
+#include "checkrecoenergy.fcl"
+#include "services_dune.fcl"
+##include "OpDetMultisim.fcl"
+##incluide "marley_anatree_dunevd10kt_1x8x14_3view_30deg.fcl"
+#incluide "marley_anatree_dunevd10kt_1x8x14_3view.fcl"
+##include "standard_anatree_dunevd10kt_1x8x6_3view.fcl"
+#include "standard_reco_dunevd10kt_1x8x14_3view_30deg_light.fcl"
+##include "standard_reco_dunevd10kt.fcl"
+#include "tools_dune.fcl"
+
+process_name: ana2
+
+services: {
+    @table::services
+    @table::dunefdvd_1x8x14_3view_30deg_services
+    @table::dunefdvd_1x8x14_3view_services
+     @table::dunefdvd_1x8x14_3view_30deg_simulation_services
+    #@table::dunefd_simulation_services
+    TFileService: { fileName: "marley_opflash_hist.root" }
+}
+
+services.Geometry: @local::dunevd10kt_1x8x14_3view_30deg_v5_geo
+services.PhotonVisibilityService: @local::dune10kt_vd_photonvisibilityservice_Ar
+
+source: {
+  module_type: RootInput
+  maxEvents:  1000        # Number of events to create
+}
+
+physics:
+{
+    @table::physics
+    reco: [ @sequence::dunefd_vertdrift_reco_pds_only ]
+    
+analyzers:
+   {
+     #incluir analyzer de marley 
+      analysistree:   @local::dune10kt_analysistree 
+      #ophitana:      @local::dune_opflashana_deco
+      opflashana:     @local::dunefd_opflashana
+      pmtracktceff:   @local::standard_neutrinotrackingeff
+      vdflashmatch:   @local::marley_vdflashmatchana
+     # photovisMap        @local::standard_photovis
+   }
+   
+   #define the output stream, there could be more than one if using filters 
+   stream1:  [ out1 ]
+   analyzeOp:  [analysistree, pmtracktceff, opflashana]
+   end_paths:     [stream1, analyzeOp]
+
+}
+
+#outputs:
+#{
+#   out1:
+#   {
+#      module_type: RootOutput
+#      fileName:    "marley_opflash_gen.root"
+      #default file name, can override from command line with -o or --output
+#   }
+
+#}
+
+physics.end_paths:   [analyzeOp]  
+
+#physics.analyzers.ophitana.OpHitModuleLabel: "ophit10ppm"
+physics.analyzers.opflashana.OpHitModuleLabel: "ophit10ppm"
+#physics.producers.opdecoana.OpHitModuleLabel: "ophit10ppm"
+physics.analyzers.opflashana.OpFlashModuleLabel:   "opflash10ppm"  
+physics.analyzers.opflashana.OpDetWaveformLabel: "opdigi10ppm"
+physics.analyzers.opflashana.DistanceCut: 360.0
+
+physics.analyzers.vdflashmatch.OpFlashModuleLabel:   "opflash10ppm"  
+physics.analyzers.vdflashmatch.OpHitModuleLabel:     "ophit10ppm"
+physics.analyzers.vdflashmatch.OpDetWaveformLabel: "opdigi10ppm"
+physics.analyzers.vdflashmatch.DistanceCut: 360.0
+
+physics.producers.ophit10ppm.HitAlgoPset.ADCThreshold: 15 # 15 is "standard"
+physics.producers.ophit10ppm.SPEArea: 130
+#physics.producers.ophit10ppm.HitAlgoPset.Pedestal: 500
+physics.producers.ophit10ppm.HitAlgoPset.SecondThreshold: 1
+
+dunefd_ophit: @local::dunefd_ophit_threegang
+
+dunefdvd_ophit: @local::dunefd_ophit
+dunefdvd_ophit.InputModule: opdigi10ppm
+dunefdvd_ophit.HitAlgoPset.ADCThreshold: 15
+dunefdvd_ophit.SPEArea: 130
+dunefdvd_ophit.HitAlgoPset.Pedestal: 500
+
+dunefd_opflash: @local::standard_opflash
+dunefd_opflash.FlashThreshold:  3.5
+
+physics.analyzers.pmtracktceff.TrackModuleLabel: "pmtracktc"
+physics.analyzers.pmtracktceff.MCTruthModuleLabel: "marley"
+physics.analyzers.pmtracktceff.NeutrinoPDGcode: 12
+physics.analyzers.pmtracktceff.LeptonPDGcode: 11
+physics.analyzers.pmtracktceff.MaxLeptonP: 0.05
+physics.analyzers.pmtracktceff.MaxNeutrinoE: 0.05
+
+physics.analyzers.analysistree.MCTruthModuleLabel : "marley"
+physics.analyzers.analysistree.GenieGenModuleLabel: "marley"
+physics.analyzers.analysistree.UseBuffers:               false
+physics.analyzers.analysistree.IgnoreMissingShowers:     false
+physics.analyzers.analysistree.SaveAuxDetInfo:           false
+physics.analyzers.analysistree.SaveCryInfo:              false
+physics.analyzers.analysistree.SaveProtoInfo:            false 
+physics.analyzers.analysistree.SaveGenieInfo:            true 
+physics.analyzers.analysistree.SaveGeantInfo:            false
+physics.analyzers.analysistree.SaveMCShowerInfo:         false  
+physics.analyzers.analysistree.SaveMCTrackInfo:          false 
+physics.analyzers.analysistree.SaveHitInfo:              true
+physics.analyzers.analysistree.SaveRawDigitInfo:         false 
+physics.analyzers.analysistree.SaveTrackInfo:            true
+physics.analyzers.analysistree.SaveVertexInfo:           false 
+physics.analyzers.analysistree.SavePandoraNuVertexInfo:  true 
+physics.analyzers.analysistree.SaveClusterInfo:          false
+#physics.analyzers.analysistree.SaveFlashInfo:            false
+physics.analyzers.analysistree.SaveFlashInfo:            true
+physics.analyzers.analysistree.SaveExternCounterInfo:    false
+physics.analyzers.analysistree.SaveShowerInfo:           false
+physics.analyzers.analysistree.SaveCaloCosmics:          false
+physics.analyzers.analysistree.SaveSpacePointSolverInfo: false
+physics.analyzers.analysistree.SaveCnnInfo:              false
+physics.analyzers.analysistree.G4minE:                   -1
+physics.analyzers.analysistree.ShowerModuleLabel: [ "trajcluster" ]
+physics.analyzers.analysistree.TrackModuleLabel: [ "pmtracktc" ]
+physics.analyzers.analysistree.VertexModuleLabel: [ "pandora", "pmtracktc", "trajcluster", "linecluster" ]
+physics.analyzers.analysistree.ClusterModuleLabel: "trajcluster"
+physics.analyzers.analysistree.CalorimetryModuleLabel: [ "pmtracktc" ]
+physics.analyzers.analysistree.ParticleIDModuleLabel: [ "pmtracktctc" ]
+physics.analyzers.analysistree.PandoraNuVertexModuleLabel: "pandora"
+physics.analyzers.analysistree.DigitModuleLabel: "tpcrawdecoder:daq"
+physics.analyzers.analysistree.HitsModuleLabel: "gaushit"
+physics.analyzers.analysistree.CalDataModuleLabel: "wclsdatanfsp:gauss"
+physics.analyzers.analysistree.FlashT0FinderLabel: [ "pmtracktc" ]
+physics.analyzers.analysistree.MVAPIDTrackModuleLabel: [ "" ]
+physics.analyzers.analysistree.MVAPIDShowerModuleLabel: [ "" ]
+physics.analyzers.analysistree.MCT0FinderLabel: [ "pmtracktc" ]
+physics.analyzers.analysistree.CosmicTaggerAssocLabel: [ "" ]
+physics.analyzers.analysistree.ContainmentTaggerAssocLabel: [ "" ]
+physics.analyzers.analysistree.GenieGenModuleLabel: "marley"
+physics.analyzers.analysistree.FlashMatchAssocLabel: [ "" ]
+
