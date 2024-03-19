@@ -176,13 +176,13 @@ private:
   int fClusterAlgoAdjChannel, fDetectorSizeX, fDetectorSizeY, fClusterInd0MatchTime, fClusterInd1MatchTime,fClusterPreselectionNHit;
   float fClusterMatchTime, fClusterMatchNHit, fClusterMatchCharge, fAdjClusterTime, fAdjClusterRad, fAdjOpFlashRad, fAdjOpFlashTime, fAdjOpFlashMaxPECut, fAdjOpFlashMinPECut;
   double fClusterAlgoTime;
-  bool fTestNewClReco, fDebug;
+  bool /*fTestNewClReco, */fDebug;
   // --- Our TTrees, and its associated variables.
   TTree* fMCTruthTree;
   TTree* fInteractionTree;
   TTree* fLowEAnaTree;
   // --- MC Truth Variables
-  int Run,SubRun,Event,Flag;
+  int /*Run,SubRun,*/Event,Flag;
   std::vector<int> TPart;
   std::vector<std::map<int,simb::MCParticle>> Parts = {};
   // --- MC Interaction Variables
