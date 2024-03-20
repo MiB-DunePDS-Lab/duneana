@@ -24,20 +24,19 @@ defaultqual e26
 
 product          version
 cetbuildtools	 v8_20_00	-	only_for_build
-dunereco         v09_82_02d01
-duneopdet        v09_82_02d01
-duneanaobj       v02_04_00a
-larcoreobj       v09_09_01
+dunereco         v09_85_00d00
+duneopdet        v09_85_00d00
+duneanaobj       v02_04_00b
 end_product_list
 
 
 # We now define allowed qualifiers and the corresponding qualifiers for the depdencies.
 # Make a table by adding columns before "notes".
-qualifier      dunereco   duneopdet  duneanaobj larcoreobj  notes
-c14:debug      c14:debug  c14:debug  c14:debug  c14:debug
-c14:prof       c14:prof   c14:prof   c14:prof   c14:prof
-e26:debug      e26:debug  e26:debug  e26:debug  e26:debug
-e26:prof       e26:prof   e26:prof   e26:prof   e26:prof
+qualifier      dunereco   duneopdet  duneanaobj   notes
+c14:debug      c14:debug  c14:debug  c14:debug  
+c14:prof       c14:prof   c14:prof   c14:prof   
+e26:debug      e26:debug  e26:debug  e26:debug  
+e26:prof       e26:prof   e26:prof   e26:prof   
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
