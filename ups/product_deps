@@ -26,7 +26,8 @@ product          version
 cetbuildtools	 v8_20_00	-	only_for_build
 dunereco         v09_85_00d00
 duneopdet        v09_85_00d00
-duneanaobj       v02_04_00b
+duneanaobj       v02_04_00a
+larcoreobj       v09_09_02
 end_product_list
 
 
