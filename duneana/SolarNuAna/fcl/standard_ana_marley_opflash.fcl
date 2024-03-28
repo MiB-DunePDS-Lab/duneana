@@ -26,11 +26,11 @@ physics:
 {
  analyzers:
  {
-   analysistree:      @local::dune10kt_analysistree
-   pmtracktceff:      @local::standard_neutrinotrackingeff
-   vdflashmatch:      @local::marley_vdflashmatchana
-   opflashana:        @local::dunefd_opflashana
-   simphotons :        @local::dune_fd_simphotonsana
+   analysistree:      @local::dune10kt_analysistree         // Obtained from AnalysisTree.fcl
+   pmtracktceff:      @local::standard_neutrinotrackingeff  // Obtained from FlashMatchAna.fcl
+   vdflashmatch:      @local::marley_vdflashmatchana        // Obtained from FlashMatchAna.fcl
+   opflashana:        @local::dunefd_opflashana             // Obtained from OpFlashAna.fcl
+   simphotons :       @local::dunefd_simphotonsana          // Obtained from SimPhotonsAna.fcl
  }
  #define the output stream, there could be more than one if using filters 
   stream1:  [ out1 ]
