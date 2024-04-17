@@ -146,7 +146,7 @@ namespace opdet {
 
   void PhotoVisDump::analyze(const art::Event&) {
 
-    if (fIsDone) return
+    //if (fIsDone) return
 
     dumpMap(); 
   }
@@ -195,6 +195,7 @@ namespace opdet {
     float opDetW = 0;
     float opDetL = 0;
     float opDetPos[3]; 
+    std::vector<size_t> opChannel; 
 
     const double voxelDim[3] = {fVoxelSizeX, fVoxelSizeY, fVoxelSizeZ}; 
 
@@ -222,6 +223,7 @@ namespace opdet {
     tOpDet->Branch("opDetL", &opDetL); 
     tOpDet->Branch("opDetW", &opDetW);
     tOpDet->Branch("opDetPos", &opDetPos, "opDetPos[3]/F");
+    tOpDet->Branch("opDetCh", &opChannel); 
 
     geo::Point_t point_center;
     TVector3 center;
@@ -232,7 +234,9 @@ namespace opdet {
     
     // store info from Geometry service
     nOpDets = geom->NOpDets();
+    int nOpChannels = geom->NOpChannels(); 
     for (size_t i : util::counter(nOpDets)) {
+      opChannel.clear(); 
       geo::OpDetGeo const& opDet = geom->OpDetGeoFromOpDet(i);
       auto center = opDet.GetCenter();
       center.GetCoordinates( opDetPos );
@@ -240,8 +244,16 @@ namespace opdet {
       opDetW = opDet.Width();
       opDetL = opDet.Length();
 
+      size_t n_ch = geom->NOpHardwareChannels(i); 
+      opChannel.resize(n_ch, 0); 
+      for (size_t ich = 0; ich < n_ch; ich++) {
+        opChannel.at(ich) = geom->OpChannel(i, ich);  
+      }
+
       tOpDet->Fill();
     }
+
+    
 
     // get cryostat dimensions 
     float cryostatMax[3] = {0}; 
@@ -316,6 +328,13 @@ namespace opdet {
     tfs->make<TParameter<Double_t>>("tpc_max_1", tpcMax[1]);  
     tfs->make<TParameter<Double_t>>("tpc_min_2", tpcMin[2]); 
     tfs->make<TParameter<Double_t>>("tpc_max_2", tpcMax[2]); 
+    tfs->make<TParameter<Double_t>>("cryo_min_0", cryostatMin[0]); 
+    tfs->make<TParameter<Double_t>>("cryo_max_0", cryostatMax[0]); 
+    tfs->make<TParameter<Double_t>>("cryo_min_1", cryostatMin[1]); 
+    tfs->make<TParameter<Double_t>>("cryo_max_1", cryostatMax[1]);  
+    tfs->make<TParameter<Double_t>>("cryo_min_2", cryostatMin[2]); 
+    tfs->make<TParameter<Double_t>>("cryo_max_2", cryostatMax[2]); 
+
 
     // here we can loop over the points of the pre-defined grid
     double x_= 0, y_= 0, z_= 0;

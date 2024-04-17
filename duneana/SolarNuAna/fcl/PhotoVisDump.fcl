@@ -16,9 +16,9 @@ standard_photovis:
    do_include_anode_refl:   "false"
    vuvhitspars:              @local::dunefd_pdfastsim_par_ar.VUVHits
    vishitspars:              @local::dunefd_pdfastsim_par_ar_refl.VISHits
-   tfloaderpars:			 @local::dunevd_pdfastsim_ann_ar.TFLoaderTool
+   tfloaderpars:			       @local::dunevd_pdfastsim_ann_ar.TFLoaderTool
 
-   do_include_buffer: "false"
+   do_include_buffer:       false
 }
 
 END_PROLOG
