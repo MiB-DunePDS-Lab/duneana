@@ -1,6 +1,6 @@
 add_subdirectory(fcl)
 art_make(BASENAME_ONLY
-         MODULE_LIBRARIES
+  MODULE_LIBRARIES
          dunecore::DAQTriggerSim_TriggerDataProducts
          larcore::Geometry_Geometry_service
          lardata::DetectorInfoServices_DetectorClocksServiceStandard_service
@@ -10,6 +10,13 @@ art_make(BASENAME_ONLY
          larsim::MCCheater_BackTrackerService_service
          larsim::MCCheater_PhotonBackTrackerService_service
          larsim::MCCheater_ParticleInventoryService_service
+
+         larsim::PhotonPropagation
+         TensorFlow::cc
+         TensorFlow::framework
+         larsimdnn::TFLoaderTool
+         larsim::PhotonPropagation_PhotonVisibilityService_service
+
          nug4::ParticleNavigation
          ART_FRAMEWORK_CORE
          ART_FRAMEWORK_PRINCIPAL
@@ -20,7 +27,7 @@ art_make(BASENAME_ONLY
          art::Persistency_Common
          art::Persistency_Provenance
          art::Utilities 
-	 canvas
+      	 canvas
          ART_PERSISTENCY_COMMON
          ART_PERSISTENCY_PROVENANCE
          ART_UTILITIES
