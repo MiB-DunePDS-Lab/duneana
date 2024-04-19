@@ -67,6 +67,7 @@ namespace opdet {
     private: 
       std::unique_ptr<phot::SemiAnalyticalModel> fVisibilityModel;
       std::unique_ptr<phot::TFLoader> fTFGenerator; 
+      size_t nOpDets;
       std::vector<geo::Point_t> fOpDetCenter;
 
       EVisModel kVisModel; 
@@ -232,7 +233,7 @@ namespace opdet {
     std::vector<double> opdetvis_rfl;
     
     // store info from Geometry service
-    size_t nOpDets = geom->NOpDets();
+    nOpDets = geom->NOpDets();
     for (size_t i : util::counter(nOpDets)) {
       opChannel.clear(); 
       geo::OpDetGeo const& opDet = geom->OpDetGeoFromOpDet(i);
