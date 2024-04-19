@@ -2,8 +2,8 @@ BEGIN_PROLOG
 
 dunefd_simphotonsana:
 {
-  module_type:            "SimPhotonsAna"
-  SimPhotonsLiteModuleLabel: "PDFastSimArExternal"
+  module_type:                  "SimPhotonsAna"
+  SimPhotonsLiteModuleLabels:   ["PDFastSimAr"]
 }
 
 END_PROLOG
