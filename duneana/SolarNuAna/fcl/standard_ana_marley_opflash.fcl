@@ -30,7 +30,7 @@ physics:
    pmtracktceff:      @local::standard_neutrinotrackingeff  // Obtained from FlashMatchAna.fcl
    vdflashmatch:      @local::marley_vdflashmatchana        // Obtained from FlashMatchAna.fcl
    opflashana:        @local::dunefd_opflashana             // Obtained from OpFlashAna.fcl
-   simphotons :       @local::dunefd_simphotonsana          // Obtained from SimPhotonsAna.fcl
+   simphotons:       @local::dunefd_simphotonsana          // Obtained from SimPhotonsAna.fcl
  }
  #define the output stream, there could be more than one if using filters 
   stream1:  [ out1 ]
@@ -45,7 +45,7 @@ physics:
 } 
 
 physics.analyzers.simphotons.module_type: "SimPhotonsAna"
-#physics.analyzers.simphotons.SimPhotonsLiteModuleLabel: "PDFastSimArExternal"
+physics.analyzers.simphotons.SimPhotonsLiteModuleLabels: ["PDFastSimAr", "PDFastSimXe", "PDFastSimArExternal", "PDFastSimXeExternal"]
 
 physics.analyzers.pmtracktceff.TrackModuleLabel: "pmtracktc"
 physics.analyzers.pmtracktceff.MCTruthModuleLabel: "marley"
@@ -109,4 +109,3 @@ physics.analyzers.opflashana.OpFlashModuleLabel:   "opflash10ppm"
 physics.analyzers.opflashana.OpDetWaveformLabel: "opdigi10ppm"
 physics.analyzers.opflashana.DistanceCut: 360.0
 
-physics.analyzers.photonsLite.SimPhotonsLiteModuleLabel: "PDFastSimArExternal"
