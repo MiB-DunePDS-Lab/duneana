@@ -1,5 +1,5 @@
 /**
- * @author      : Pablo Barham Alzás 
+ * @author      : Pablo Barham Alzás, Daniele Guffanti
  * @file        : SimPhotonsAna_module.cc
  * @created     : Thursday Feb 22, 2024 08:46:59 CST
  * @brief       : This analyzer writes out a TTree containing the properties of
@@ -39,29 +39,48 @@ namespace sim {
 
   class SimPhotonsAna : public art::EDAnalyzer {
   public:
+    struct Config_t {
+      fhicl::Atom<std::string>     module_type{ fhicl::Name("module_type"), "SimPhotonsAna" };
+      fhicl::Sequence<std::string> simphotons_labels{ fhicl::Name("SimPhotonsLiteModuleLabels") };
+    };
+
+    using Parameters = art::EDAnalyzer::Table<Config_t>;
+
     // Standard constructor and destructor for an ART module.
-    SimPhotonsAna(const fhicl::ParameterSet&);
+    explicit SimPhotonsAna(Parameters const&);
 
     // The analyzer routine, called once per event.
     void analyze(const art::Event&);
 
   private:
-    // The stuff below is the part you'll most likely have to change to
-    // go from this custom example to your own task.
+    const std::map<std::string, UShort_t> fSimPhotonsLabelIDMap = {
+      {"PDFastSimAr", 1}, 
+      {"PDFastSimXe", 2}, 
+      {"PDFastSimArExternal", 3}, 
+      {"PDFastSimXeExternal", 4}
+    };
+
+    inline UShort_t GetSimPhotonsLabelID(const std::string& label) const {
+      if (fSimPhotonsLabelIDMap.find(label) != fSimPhotonsLabelIDMap.end()) {
+        return fSimPhotonsLabelIDMap.find(label)->second; 
+      }
+      return 0;
+    };
 
     // The parameters we'll read from the .fcl file.
-    std::string fSimPhotonsLiteModuleLabel; // Input tag for SimPhotonsLite object
+    std::vector<std::string> fSimPhotonsLiteModuleLabels = {}; // Input tags for SimPhotonsLite object
 
     // Define the tree
-    TTree* fPhotonsTree;
+    TTree* fPhotonsTree = {};
 
     // Define the variables that will go into the tree
-    Int_t fEventID;
-    Int_t fOpChannel;
+    Int_t fEventID = {};
+    Int_t fOpChannel = {};
+    UShort_t fSimPhotonsLabelID = {};
     
-    std::vector<int> fTickTime; // Tick time in ns (I think? pretty irrelevant)
-    std::vector<int> fDetectedPhotonsCountPerTick; // Number of detected photons per tick
-    Int_t fDetectedPhotonsCount; // Total number of detected photons
+    std::vector<int> fTickTime = {}; // Tick time in ns (I think? pretty irrelevant)
+    std::vector<int> fDetectedPhotonsCountPerTick = {}; // Number of detected photons per tick
+    Int_t fDetectedPhotonsCount = {}; // Total number of detected photons
 
     // Object that we'll actually read from the artroot file
     std::map<int, int> fDetectedPhotons;
@@ -73,11 +92,9 @@ namespace sim {
 
   //-----------------------------------------------------------------------
   // Constructor
-  SimPhotonsAna::SimPhotonsAna(fhicl::ParameterSet const& pset) : EDAnalyzer(pset)
+  SimPhotonsAna::SimPhotonsAna(Parameters const& pset) : art::EDAnalyzer{pset}, 
+    fSimPhotonsLiteModuleLabels{ pset().simphotons_labels() }
   {
-    // Indicate that the Input Module comes from .fcl
-    fSimPhotonsLiteModuleLabel = pset.get<std::string>("SimPhotonsLiteModuleLabel");
-
     art::ServiceHandle<art::TFileService const> tfs;
 
     // Make and add the branches to the tree
@@ -87,6 +104,7 @@ namespace sim {
     fPhotonsTree->Branch("TickTime", &fTickTime);
     fPhotonsTree->Branch("DetectedPhotonsCountPerTick", &fDetectedPhotonsCountPerTick);
     fPhotonsTree->Branch("DetectedPhotonsCount", &fDetectedPhotonsCount, "DetectedPhotonsCount/I");
+    fPhotonsTree->Branch("SimPhotonsLabel", &fSimPhotonsLabelID, "SimPhotonsLabel/s");
   }
 
   //-----------------------------------------------------------------------
@@ -104,32 +122,35 @@ namespace sim {
 
     // Get the SimPhotonsLite object
     art::Handle<std::vector<sim::SimPhotonsLite>> SimPhotonsLiteHandle;
-    evt.getByLabel(fSimPhotonsLiteModuleLabel, SimPhotonsLiteHandle);
 
-    // Loop over all the SimPhotonsLite objects
-    for (unsigned int i = 0; i < SimPhotonsLiteHandle->size(); i++) {
-      // const sim::SimPhotonsLite& SimPhotonsLite = SimPhotonsLiteHandle->at(i);
+    for (const auto& simphotons_label : fSimPhotonsLiteModuleLabels) {
+      evt.getByLabel(simphotons_label, SimPhotonsLiteHandle);
 
-      // fOpChannel = SimPhotonsLite.OpChannel();
-      // fDetectedPhotons = SimPhotonsLite.DetectedPhotons();
+      fSimPhotonsLabelID = GetSimPhotonsLabelID( simphotons_label ); 
+      // Loop over all the SimPhotonsLite objects
+      for (unsigned int i = 0; i < SimPhotonsLiteHandle->size(); i++) {
+        // const sim::SimPhotonsLite& SimPhotonsLite = SimPhotonsLiteHandle->at(i);
 
-      fOpChannel = SimPhotonsLiteHandle->at(i).OpChannel;
-      fDetectedPhotons = SimPhotonsLiteHandle->at(i).DetectedPhotons;
+        // fOpChannel = SimPhotonsLite.OpChannel();
+        // fDetectedPhotons = SimPhotonsLite.DetectedPhotons();
 
-      fTickTime.clear();
-      fDetectedPhotonsCountPerTick.clear();
-      fDetectedPhotonsCount = 0;
+        fOpChannel = SimPhotonsLiteHandle->at(i).OpChannel;
+        fDetectedPhotons = SimPhotonsLiteHandle->at(i).DetectedPhotons;
 
-      // Separate the DetectedPhotons map<int,int> into two vectors
-      for (std::map<int, int>::iterator it = fDetectedPhotons.begin(); it != fDetectedPhotons.end(); ++it) {
-        fTickTime.push_back(it->first);
-        fDetectedPhotonsCountPerTick.push_back(it->second);
-        fDetectedPhotonsCount += it->second;
+        fTickTime.clear();
+        fDetectedPhotonsCountPerTick.clear();
+        fDetectedPhotonsCount = 0;
+
+        // Separate the DetectedPhotons map<int,int> into two vectors
+        for (std::map<int, int>::iterator it = fDetectedPhotons.begin(); it != fDetectedPhotons.end(); ++it) {
+          fTickTime.push_back(it->first);
+          fDetectedPhotonsCountPerTick.push_back(it->second);
+          fDetectedPhotonsCount += it->second;
+        }
+
+        fPhotonsTree->Fill();
       }
-
-      fPhotonsTree->Fill();
     }
-
   }
 
 } // namespace sim
