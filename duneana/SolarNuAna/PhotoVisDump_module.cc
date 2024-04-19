@@ -234,7 +234,6 @@ namespace opdet {
     
     // store info from Geometry service
     nOpDets = geom->NOpDets();
-    int nOpChannels = geom->NOpChannels(); 
     for (size_t i : util::counter(nOpDets)) {
       opChannel.clear(); 
       geo::OpDetGeo const& opDet = geom->OpDetGeoFromOpDet(i);
