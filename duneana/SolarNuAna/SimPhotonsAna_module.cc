@@ -21,7 +21,7 @@
 #include "lardata/DetectorInfoServices/DetectorClocksService.h"
 #include "dunecore/DuneInterface/Service/RawDigitExtractService.h"
 #include "dunecore/DuneInterface/Service/PedestalEvaluationService.h"
-
+#include "larcorealg/CoreUtils/counter.h"
 #include "lardataobj/Simulation/SimPhotons.h"
 
 // ART includes.
@@ -52,6 +52,8 @@ namespace sim {
     // The analyzer routine, called once per event.
     void analyze(const art::Event&);
 
+    void fill_opdet_tree(); 
+
   private:
     const std::map<std::string, UShort_t> fSimPhotonsLabelIDMap = {
       {"PDFastSimAr", 1}, 
@@ -70,10 +72,19 @@ namespace sim {
     // The parameters we'll read from the .fcl file.
     std::vector<std::string> fSimPhotonsLiteModuleLabels = {}; // Input tags for SimPhotonsLite object
 
+
     // Define the tree
     TTree* fPhotonsTree = {};
+    TTree* fOpDetTree = {}; 
 
     // Define the variables that will go into the tree
+    Int_t event_counter = 0;
+    Float_t opDetH = 0.0; 
+    Float_t opDetL = 0.0; 
+    Float_t opDetW = 0.0; 
+    Float_t opDetPos[3] = {0.0, 0.0, 0.0};
+    std::vector<size_t> opChannel; 
+
     Int_t fEventID = {};
     Int_t fOpChannel = {};
     UShort_t fSimPhotonsLabelID = {};
@@ -105,18 +116,52 @@ namespace sim {
     fPhotonsTree->Branch("DetectedPhotonsCountPerTick", &fDetectedPhotonsCountPerTick);
     fPhotonsTree->Branch("DetectedPhotonsCount", &fDetectedPhotonsCount, "DetectedPhotonsCount/I");
     fPhotonsTree->Branch("SimPhotonsLabel", &fSimPhotonsLabelID, "SimPhotonsLabel/s");
+
+    fOpDetTree = tfs->make<TTree>("opDetMap", "opDetMap");
+    fOpDetTree->Branch("opDetH", &opDetH); 
+    fOpDetTree->Branch("opDetL", &opDetL); 
+    fOpDetTree->Branch("opDetW", &opDetW);
+    fOpDetTree->Branch("opDetPos", &opDetPos, "opDetPos[3]/F");
+    fOpDetTree->Branch("opDetCh", &opChannel); 
+
+    return;
   }
 
   //-----------------------------------------------------------------------
-  void
-  SimPhotonsAna::analyze(const art::Event& evt)
+  void SimPhotonsAna::fill_opdet_tree()
+    {
+      auto const* geom = lar::providerFrom<geo::Geometry>();
+      UInt_t nOpDets = geom->NOpDets();
+      for (size_t i : util::counter(nOpDets)) {
+        opChannel.clear(); 
+        geo::OpDetGeo const& opDet = geom->OpDetGeoFromOpDet(i);
+        auto center = opDet.GetCenter();
+        center.GetCoordinates( opDetPos );
+        opDetH = opDet.Height();
+        opDetW = opDet.Width();
+        opDetL = opDet.Length();
+
+        size_t n_ch = geom->NOpHardwareChannels(i); 
+        opChannel.resize(n_ch, 0); 
+        for (size_t ich = 0; ich < n_ch; ich++) {
+          opChannel.at(ich) = geom->OpChannel(i, ich);  
+        }
+
+        fOpDetTree->Fill();
+      }
+
+      return;
+    }
+
+  //-----------------------------------------------------------------------
+  void SimPhotonsAna::analyze(const art::Event& evt)
   {
    
-    // auto const* geo = lar::providerFrom<geo::Geometry>();
+     //auto const* geo = lar::providerFrom<geo::Geometry>();
 
-    // Access ART's TFileService, which will handle creating and writing
-    // histograms for us.
-    art::ServiceHandle<art::TFileService const> tfs;
+    if (event_counter == 0) {
+      fill_opdet_tree(); 
+    }
 
     fEventID = evt.id().event();
 
@@ -151,6 +196,8 @@ namespace sim {
         fPhotonsTree->Fill();
       }
     }
+
+    event_counter++;
   }
 
 } // namespace sim
