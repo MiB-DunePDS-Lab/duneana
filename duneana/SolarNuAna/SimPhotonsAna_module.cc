@@ -40,8 +40,9 @@ namespace sim {
   class SimPhotonsAna : public art::EDAnalyzer {
   public:
     struct Config_t {
-      fhicl::Atom<std::string>     module_type{ fhicl::Name("module_type"), "SimPhotonsAna" };
-      fhicl::Sequence<std::string> simphotons_labels{ fhicl::Name("SimPhotonsLiteModuleLabels") };
+      public: 
+        fhicl::Atom<std::string>     module_type{ fhicl::Name("module_type"), "SimPhotonsAna" };
+        fhicl::Sequence<std::string> simphotons_labels{ fhicl::Name("SimPhotonsLiteModuleLabels") };
     };
 
     using Parameters = art::EDAnalyzer::Table<Config_t>;
@@ -69,8 +70,33 @@ namespace sim {
       return 0;
     };
 
+    struct SimPhotonsLabel_t {
+      std::string fLabel = {}; 
+      std::string fInstance = {};
+
+      SimPhotonsLabel_t() {}
+      SimPhotonsLabel_t(const std::string label, const std::string instance) :
+        fLabel(label), fInstance(instance) {}
+      SimPhotonsLabel_t(const std::string label) {
+        size_t pos = label.find(':');
+        if (pos != std::string::npos) {
+            fLabel = label.substr(0, pos);
+            fInstance = label.substr(pos + 1);
+        } else {
+          fLabel = label;
+        }
+      }
+      inline std::string to_string() const {
+        if (fInstance.empty()) return fLabel;
+
+        std::string str_id = fLabel + ":" + fInstance;
+        return str_id;
+      }
+    }; 
+
     // The parameters we'll read from the .fcl file.
-    std::vector<std::string> fSimPhotonsLiteModuleLabels = {}; // Input tags for SimPhotonsLite object
+    std::vector<SimPhotonsLabel_t> fSimPhotonsLiteModuleLabels = {}; // Input tags for SimPhotonsLite object
+    std::vector<std::string> fSimPhotonsLiteLabelString = {};
 
 
     // Define the tree
@@ -87,7 +113,7 @@ namespace sim {
 
     Int_t fEventID = {};
     Int_t fOpChannel = {};
-    UShort_t fSimPhotonsLabelID = {};
+    std::string fSimPhotonsLabelID = {};
     
     std::vector<int> fTickTime = {}; // Tick time in ns (I think? pretty irrelevant)
     std::vector<int> fDetectedPhotonsCountPerTick = {}; // Number of detected photons per tick
@@ -104,8 +130,12 @@ namespace sim {
   //-----------------------------------------------------------------------
   // Constructor
   SimPhotonsAna::SimPhotonsAna(Parameters const& pset) : art::EDAnalyzer{pset}, 
-    fSimPhotonsLiteModuleLabels{ pset().simphotons_labels() }
+    fSimPhotonsLiteLabelString( pset().simphotons_labels() )
   {
+    for (const auto& label : fSimPhotonsLiteLabelString ) {
+      fSimPhotonsLiteModuleLabels.push_back( SimPhotonsLabel_t(label) ); 
+    }
+
     art::ServiceHandle<art::TFileService const> tfs;
 
     // Make and add the branches to the tree
@@ -115,7 +145,7 @@ namespace sim {
     fPhotonsTree->Branch("TickTime", &fTickTime);
     fPhotonsTree->Branch("DetectedPhotonsCountPerTick", &fDetectedPhotonsCountPerTick);
     fPhotonsTree->Branch("DetectedPhotonsCount", &fDetectedPhotonsCount, "DetectedPhotonsCount/I");
-    fPhotonsTree->Branch("SimPhotonsLabel", &fSimPhotonsLabelID, "SimPhotonsLabel/s");
+    fPhotonsTree->Branch("SimPhotonsLabel", &fSimPhotonsLabelID);
 
     fOpDetTree = tfs->make<TTree>("opDetMap", "opDetMap");
     fOpDetTree->Branch("opDetH", &opDetH); 
@@ -169,9 +199,13 @@ namespace sim {
     art::Handle<std::vector<sim::SimPhotonsLite>> SimPhotonsLiteHandle;
 
     for (const auto& simphotons_label : fSimPhotonsLiteModuleLabels) {
-      evt.getByLabel(simphotons_label, SimPhotonsLiteHandle);
-
-      fSimPhotonsLabelID = GetSimPhotonsLabelID( simphotons_label ); 
+      if ( simphotons_label.fInstance.empty() ) {
+        evt.getByLabel(simphotons_label.fLabel, SimPhotonsLiteHandle);
+      }
+      else {
+        evt.getByLabel(simphotons_label.fLabel, simphotons_label.fInstance, SimPhotonsLiteHandle);
+      }
+      fSimPhotonsLabelID = simphotons_label.to_string(); 
       // Loop over all the SimPhotonsLite objects
       for (unsigned int i = 0; i < SimPhotonsLiteHandle->size(); i++) {
         // const sim::SimPhotonsLite& SimPhotonsLite = SimPhotonsLiteHandle->at(i);

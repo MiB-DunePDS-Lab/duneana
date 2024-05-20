@@ -31,7 +31,7 @@ physics:
    pmtracktceff:      @local::standard_neutrinotrackingeff
    flashmatch:        @local::standard_flashmatchana
    ophitana:           @local::dune_opflashana_deco
-   simphotons :       @local::dunefd_simphotonsana        
+   simphotons:       @local::dunefd_simphotonsana        
  }
  #define the output stream, there could be more than one if using filters 
   stream1:  [ out1 ]
@@ -47,7 +47,7 @@ physics:
 } 
 
 physics.analyzers.simphotons.module_type: "SimPhotonsAna"
-physics.analyzers.simphotons.SimPhotonsLiteModuleLabel: "PDFastSim"
+physics.analyzers.simphotons.SimPhotonsLiteModuleLabels: ["PDFastSim", "PDFastSim:Reflected"]
 
 physics.analyzers.pmtracktceff.TrackModuleLabel: "pmtracktc"
 physics.analyzers.pmtracktceff.MCTruthModuleLabel: "marley"
