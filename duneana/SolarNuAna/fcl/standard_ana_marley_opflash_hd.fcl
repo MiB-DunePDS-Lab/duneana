@@ -3,7 +3,7 @@
 #include "SimPhotonsAna.fcl"
 #include "OpHitFinderDeco.fcl"
 #include "OpFlashAnaDeco.fcl"
-#include "standard_reco2_dune10kt_1x2x6.fcl"
+#include "standard_reco_dune10kt.fcl"
 
 
 process_name: anaHD
@@ -21,7 +21,7 @@ services:
 }
 
 services.Geometry: @local::dune10kt_1x2x6_v6_refactored_geo   
-services.PhotonVisibilityService: @local::dune10kt_vd_photonvisibilityservice_Ar
+services.PhotonVisibilityService: @local::dune10kt_1x2x6_photonvisibilityservice
 
 physics:
 {
@@ -30,8 +30,8 @@ physics:
    analysistree:      @local::dune10kt_analysistree       
    pmtracktceff:      @local::standard_neutrinotrackingeff
    flashmatch:        @local::standard_flashmatchana
-   ophitana:           @local::dune_opflashana_deco
-   simphotons:       @local::dunefd_simphotonsana        
+   ophitana:          @local::dune_opflashana_deco
+   simphotons:        @local::dunefd_simphotonsana        
  }
  #define the output stream, there could be more than one if using filters 
   stream1:  [ out1 ]
@@ -99,3 +99,6 @@ physics.analyzers.analysistree.CosmicTaggerAssocLabel: [ "" ]
 physics.analyzers.analysistree.ContainmentTaggerAssocLabel: [ "" ]
 physics.analyzers.analysistree.GenieGenModuleLabel: "marley"
 physics.analyzers.analysistree.FlashMatchAssocLabel: [ "" ]
+
+physics.analyzers.ophitana.OpHitModuleLabel: "ophitspe"
+physics.analyzers.ophitana.OpFlashModuleLabel: "opflash" 
