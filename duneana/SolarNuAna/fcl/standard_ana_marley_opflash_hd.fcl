@@ -102,3 +102,7 @@ physics.analyzers.analysistree.FlashMatchAssocLabel: [ "" ]
 
 physics.analyzers.ophitana.OpHitModuleLabel: "ophitspe"
 physics.analyzers.ophitana.OpFlashModuleLabel: "opflash" 
+
+physics.analyzers.flashmatch.SignalLabel: "marley"
+physics.analyzers.flashmatch.kgenerator: 3
+
