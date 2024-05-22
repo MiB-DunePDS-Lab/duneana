@@ -47,7 +47,7 @@ physics:
 } 
 
 physics.analyzers.simphotons.module_type: "SimPhotonsAna"
-physics.analyzers.simphotons.SimPhotonsLiteModuleLabel: "PDFastSim"
+physics.analyzers.simphotons.SimPhotonsLiteModuleLabels: ["PDFastSim", "PDFastSim:Reflected"]
 
 physics.analyzers.pmtracktceff.TrackModuleLabel: "pmtracktc"
 physics.analyzers.pmtracktceff.MCTruthModuleLabel: "marley"
@@ -102,3 +102,7 @@ physics.analyzers.analysistree.FlashMatchAssocLabel: [ "" ]
 
 physics.analyzers.ophitana.OpHitModuleLabel: "ophitspe"
 physics.analyzers.ophitana.OpFlashModuleLabel: "opflash" 
+
+physics.analyzers.flashmatch.SignalLabel: "marley"
+physics.analyzers.flashmatch.kgenerator: 3
+
