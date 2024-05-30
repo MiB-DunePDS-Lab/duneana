@@ -53,7 +53,7 @@ namespace sim {
     // The analyzer routine, called once per event.
     void analyze(const art::Event&);
 
-    void fill_opdet_tree(); 
+
 
   private:
     const std::map<std::string, UShort_t> fSimPhotonsLabelIDMap = {
@@ -109,6 +109,7 @@ namespace sim {
     Float_t opDetL = 0.0; 
     Float_t opDetW = 0.0; 
     Float_t opDetPos[3] = {0.0, 0.0, 0.0};
+    UInt_t  opDetOrientation = 9;
     std::vector<size_t> opChannel; 
 
     Int_t fEventID = {};
@@ -121,6 +122,9 @@ namespace sim {
 
     // Object that we'll actually read from the artroot file
     std::map<int, int> fDetectedPhotons;
+
+    void fill_opdet_tree(); 
+    UInt_t get_opdet_orientation(const Float_t height, const Float_t length, const Float_t width) const;
   };
 
 }
@@ -152,12 +156,35 @@ namespace sim {
     fOpDetTree->Branch("opDetL", &opDetL); 
     fOpDetTree->Branch("opDetW", &opDetW);
     fOpDetTree->Branch("opDetPos", &opDetPos, "opDetPos[3]/F");
+    fOpDetTree->Branch("opDetOrientation", &opDetOrientation); 
     fOpDetTree->Branch("opDetCh", &opChannel); 
 
     return;
   }
 
   //-----------------------------------------------------------------------
+    
+  UInt_t SimPhotonsAna::get_opdet_orientation(Float_t height, Float_t length, Float_t width) const 
+  {
+    UInt_t orientation = 9;
+    //Float_t local_height = 0; 
+    //Float_t local_length = 0; 
+    if (width > length) { // laterals along x-y plane, Z dimension smallest
+      orientation = 2;
+      //local_length = width;
+    }
+    else if (width > height) { // laterals along x-z plane, Y dimension smallest
+      orientation = 1;
+      //local_height = width;
+    }
+    else { // anode/cathode (default), X dimension smallest
+      orientation = 0;
+    }
+
+    return orientation;
+  }
+
+
   void SimPhotonsAna::fill_opdet_tree()
     {
       auto const* geom = lar::providerFrom<geo::Geometry>();
@@ -170,6 +197,8 @@ namespace sim {
         opDetH = opDet.Height();
         opDetW = opDet.Width();
         opDetL = opDet.Length();
+
+        opDetOrientation = get_opdet_orientation(opDetH, opDetL, opDetW);
 
         size_t n_ch = geom->NOpHardwareChannels(i); 
         opChannel.resize(n_ch, 0); 
