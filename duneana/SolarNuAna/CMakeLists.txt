@@ -11,12 +11,6 @@ art_make(BASENAME_ONLY
          larsim::MCCheater_PhotonBackTrackerService_service
          larsim::MCCheater_ParticleInventoryService_service
 
-         larsim::PhotonPropagation
-         TensorFlow::cc
-         TensorFlow::framework
-         larsimdnn::TFLoaderTool
-         larsim::PhotonPropagation_PhotonVisibilityService_service
-
          nug4::ParticleNavigation
          ART_FRAMEWORK_CORE
          ART_FRAMEWORK_PRINCIPAL
@@ -33,7 +27,7 @@ art_make(BASENAME_ONLY
          ART_UTILITIES
          messagefacility::MF_MessageLogger
          cetlib::cetlib 
-	 cetlib_except
+         cetlib_except
          ROOT_BASIC_LIB_LIST
          )
 
