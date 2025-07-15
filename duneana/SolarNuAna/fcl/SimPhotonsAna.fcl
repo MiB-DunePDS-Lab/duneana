@@ -1,0 +1,9 @@
+BEGIN_PROLOG
+
+dunefd_simphotonsana:
+{
+  module_type:                  "SimPhotonsAna"
+  SimPhotonsLiteModuleLabels:   ["PDFastSimAr"]
+}
+
+END_PROLOG
