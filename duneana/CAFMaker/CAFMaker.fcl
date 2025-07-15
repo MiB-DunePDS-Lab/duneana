@@ -1,54 +1,48 @@
 #include "calorimetry_dune10kt.fcl"
-#include "trackfinderalgorithms.fcl"
-#include "dunerw.fcl"
 
 BEGIN_PROLOG
 
 dunefd_cafmaker:
 {
-    module_type:             "CAFMaker"
+    module_type:                "CAFMaker"
+    CreateFlatCAF:              true
 
-    CreateCAF: true
-    CreateFlatCAF: true
+    CVNLabel:                   "cvneva:cvnresult"
+    IsAtmoCVN:                  false #Hotfix to take care of the fact that the CVN for atmospherics is storing results in a weird way...
+    RegCNNLabel:                "regcnneval"
+    EnergyRecoCaloLabel:        "energyrecnc"
+    EnergyRecoLepCaloLabel:     "energyrecnumu"
+    EnergyRecoMuRangeLabel:     "energyrecnumurange"
+    EnergyRecoMuMcsLabel:       "energyrecnumumcs"
+    EnergyRecoMuMcsLLHDLabel:   "energyrecnumumcsllhd"
+    EnergyRecoECaloLabel:       "energyrecnue"
+    DirectionRecoLabelNue:      "anglereconuepfps"
+    DirectionRecoLabelNumu:     "anglereconumupfps"
+    DirectionRecoLabelCalo:     "anglerecohits"
+    PandoraLabel:               "pandora"
+    ParticleIDLabel:            "pandorapid"
+    MCTruthLabel:               "generator"
+    GTruthLabel:                "generator"
+    MCFluxLabel:                "generator"
+    POTSummaryLabel:            "generator"
+    TrackLabel:                 "pandoraTrack"
+    ShowerLabel:                "pandoraShower"
+    SpacePointLabel:            "pandora"
+    HitLabel:                   "hitfd"
+    G4Label:                    "largeant"
 
-    MVASelectLabel:          "mvaselect"
+    VertexFiducialVolumeCut:    [ 20, 20, 20, 20, 20, 20 ] #FV cut margins for all directions minX, maxX, minY, maxY, minZ, maxZ (in cm)
+    ContainedDistThreshold:     20 #Distance from the edge of the AV to be considered contained (in cm)
 
-    MVASelectNueLabel:  "mvaselectnue"
-    MVASelectNumuLabel: "mvaselectnumu"
+    CalorimetryAlg:             @local::dune10kt_calorimetryalgmc
+    RecombFactor:               0.63 #Average recombination factor used the the hits not attached to a PFP
+    
+}
 
-    CVNLabel:           "cvneval"
-    RegCNNLabel:        "regcnneval"
-
-    EnergyRecoNueLabel:      "energyreconue"
-    EnergyRecoNumuLabel:     "energyreconumu"
-
-    Select:                  "numu"
-
-    MakeAnaTree:             false    # Tree for general use
-    MakeWeightTree:          false    # Tree for TMVAClassification input, makes weight file
-    MakeSystHist:            false
-    #HitsModuleLabel:         "lineclusterdc"
-    #TrackModuleLabel:        "pmtrackdc"
-    #ClusterModuleLabel:      "lineclusterdc"
-    #VertexModuleLabel:       "pmtrackdc"
-    #ShowerModuleLabel:       "emshowerdc"
-    #CalorimetryModuleLabel:  "pmtrackcalodc"
-    RawDigitModuleLabel:     "daq"
-    WireModuleLabel:         "caldata"
-    HitsModuleLabel:         "linecluster"
-    TrackModuleLabel:        "pmtrack"
-    ClusterModuleLabel:	     "linecluster"
-    VertexModuleLabel:       "pmtrack"
-    ShowerModuleLabel:       "emshower"
-    CalorimetryModuleLabel:  "pmtrackcalo"
-    GenieGenModuleLabel:     "generator"
-    POTModuleLabel:          "generator"
-    FlashModuleLabel:        "opflash"
-    CalorimetryAlg:          @local::dune10kt_calorimetryalgmc
-    FidVolCut:	             3.0
-    NuECut:                  0.8
-    NuMuCut:                 0.8
-    generated_systematic_provider_configuration: @local::generated_systematic_provider_configuration
+dunefdvd_cafmaker:
+{
+    @table::dunefd_cafmaker
+    HitLabel: "gaushit"
 }
 
 END_PROLOG

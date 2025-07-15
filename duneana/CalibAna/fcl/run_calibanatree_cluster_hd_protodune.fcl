@@ -1,0 +1,94 @@
+#include "services_dune.fcl"
+#include "dune_calibanatree.fcl"
+#include "tools_dune.fcl" 
+
+process_name: CalibAna
+
+services:
+{
+  TFileService:                   { fileName: "calibanatree_out.root" }
+
+  TimeTracker:                  @local::dune_time_tracker
+  MemoryTracker:                @local::dune_memory_tracker
+  RandomNumberGenerator:        {} #ART native random number generator
+
+  FileCatalogMetadata:          @local::art_file_catalog_data
+  ChannelStatusService:         @local::dunefd_channel_status
+
+
+  Geometry:                     @local::protodunehdv6_geo
+  DetectorClocksService:        @local::protodunehd_detectorclocks
+  DetectorPropertiesService:    @local::protodunehd_detproperties
+  LArPropertiesService:         @local::dunefd_properties
+  LArFFT:                       @local::dunefd_larfft
+  DatabaseUtil:                 @local::dunefd_database
+  BackTrackerService:           @local::pdsp_backtrackerservice
+  ParticleInventoryService:     @local::dunefd_particleinventoryservice
+  PhotonBackTrackerService:     @local::dunefd_photonbacktrackerservice_legacy
+  SpaceCharge:                  @local::pdhd_spacecharge
+
+  WireReadout:                  @local::dune_wire_readout
+}
+
+services.AuxDetGeometry.GDML: "protodunehd_v6_refactored.gdml"
+services.AuxDetGeometry.Name: "protodunehdv6"
+
+source:
+{
+  module_type: RootInput
+  maxEvents:   -1        # Number of events to create
+}
+outputs:
+{}
+
+physics.analyzers:
+{
+    calibanar1: @local::dune_calibanatree_cluster
+    calibanar2: @local::dune_calibanatree_cluster
+    calibanar3: @local::dune_calibanatree_cluster
+    calibanar4: @local::dune_calibanatree_cluster
+    calibanar5: @local::dune_calibanatree_cluster
+}
+
+physics.filters: {}
+
+physics.analyzers.calibanar1.IsPD:        true
+physics.analyzers.calibanar1.IsHD:        true
+physics.analyzers.calibanar1.Verbose:       true
+physics.analyzers.calibanar1.TrackAnalysis: true
+physics.analyzers.calibanar1.RadiusInt:     1
+physics.analyzers.calibanar1.RadiusExt:     10
+
+physics.analyzers.calibanar1.IsPD:        true
+physics.analyzers.calibanar1.IsHD:        true
+physics.analyzers.calibanar2.Verbose:       true
+physics.analyzers.calibanar2.TrackAnalysis: false
+physics.analyzers.calibanar2.RadiusInt:     2
+physics.analyzers.calibanar2.RadiusExt:     10
+
+physics.analyzers.calibanar1.IsPD:        true
+physics.analyzers.calibanar1.IsHD:        true
+physics.analyzers.calibanar3.Verbose:       true
+physics.analyzers.calibanar3.TrackAnalysis: false
+physics.analyzers.calibanar3.RadiusInt:     3
+physics.analyzers.calibanar3.RadiusExt:     10
+
+physics.analyzers.calibanar1.IsPD:        true
+physics.analyzers.calibanar1.IsHD:        true
+physics.analyzers.calibanar4.Verbose:       true
+physics.analyzers.calibanar4.TrackAnalysis: false
+physics.analyzers.calibanar4.RadiusInt:     4
+physics.analyzers.calibanar4.RadiusExt:     10
+
+physics.analyzers.calibanar1.IsPD:        true
+physics.analyzers.calibanar1.IsHD:        true
+physics.analyzers.calibanar5.Verbose:       true
+physics.analyzers.calibanar5.TrackAnalysis: false
+physics.analyzers.calibanar5.RadiusInt:     5
+physics.analyzers.calibanar5.RadiusExt:     10
+
+physics.ana:       [calibanar1 ] #, calibanar2 , calibanar3 , calibanar4 , calibanar5 ]
+physics.end_paths: [ana]
+
+
+
