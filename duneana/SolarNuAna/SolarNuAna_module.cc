@@ -55,6 +55,8 @@
 #include "duneopdet/SolarNuUtils/SolarAuxUtils.h"
 #include "duneopdet/SolarNuUtils/AdjOpHitsUtils.h"
 #include "dunereco/LowEUtils/LowEUtils.h"
+#include "duneana/SolarNuAna/SolarNuAnaProcessors/SolarNuAnaData.hh"
+#include "duneana/SolarNuAna/SolarNuAnaProcessors/SolarMCTruthProcessor.hh"
 
 namespace solar
 {
@@ -93,6 +95,12 @@ namespace solar
     TTree *fConfigTree;
     TTree *fMCTruthTree;
     TTree *fSolarNuAnaTree;
+	SolarEventData data_event;
+	SolarMCTruthData data_truth;
+	SolarOpHitData data_ophit;
+	SolarOpFlashData data_opflash;
+	SolarClusterData data_cluster;
+
     std::string TNuInteraction;
     std::vector<std::map<int, simb::MCParticle>> GeneratorParticles = {};
     int Event, Flag, MNHit, MGen, MTPC, MInd0TPC, MInd1TPC, MInd0NHits, MInd1NHits, MMainID, MMainPDG, MMainParentPDG, TrackNum, OpHitNum, OpFlashNum, MTrackNPoints, MAdjClNum, MSignalAdjClNum, SignalParticlePDG;
@@ -145,6 +153,8 @@ namespace solar
     std::unique_ptr<producer::ProducerUtils> producer;
     std::unique_ptr<solar::AdjOpHitsUtils> adjophits;
     std::unique_ptr<solar::LowEUtils> lowe;
+
+	std::unique_ptr<solar::SolarMCTruthProcessor> mctruth_processor;
   };
 #endif
 
@@ -154,7 +164,8 @@ namespace solar
         solaraux(new solar::SolarAuxUtils(p)),
         producer(new producer::ProducerUtils(p)),
         adjophits(new solar::AdjOpHitsUtils(p)),
-        lowe(new solar::LowEUtils(p))
+        lowe(new solar::LowEUtils(p)),
+		mctruth_processor( new solar::SolarMCTruthProcessor(data_event, data_truth, data_ophit, data_opflash, data_cluster))
   {
     this->reconfigure(p);
   }
