@@ -1,0 +1,48 @@
+#include "opticaldetectormodules.fcl"
+
+BEGIN_PROLOG
+
+### FD1-HD ###
+
+standard_ChargeAndLight:
+{
+   module_type:          "ChargeAndLightAna"
+    
+   OpFlashModuleLabel:   "opflash"  
+   OpHitModuleLabel:     "ophit" 
+   EdepLabel:            "IonAndScint"  
+   elecDriftLabel:       "tpcrawdecoder:SimpleSC" #Change to tpcrawdecoder:SimpleSC for wirecell #original "elecDrift"
+   SignalLabel:          "generator"
+   GeantLabel:           "largeant"
+   IsVD:                 false   #If a VD sample, we may want flashes recorded between FC and cryostat lateral      
+   HitsLabel:            "gaushit"  
+   ParticleModuleLabel:  "pandora"
+   TrackLabel:           "pandoraTrack"
+   ShowerLabel:          "pandoraShower"
+   HitToSpacePointLabel:   "pandora"  
+   Beam:		 false 		 
+   DistanceCut:          240 # cm
+   NBinsE:               50
+   LowE:                 0
+   HighE:                5
+   NBinsX:               50
+   LowX:                -360
+   HighX:                360
+}
+
+
+### FD2-VD ###
+
+standard_vdChargeAndLight: @local::standard_ChargeAndLight
+standard_vdChargeAndLight.OpFlashModuleLabel:   "opflash10ppm"  
+standard_vdChargeAndLight.OpHitModuleLabel:     "ophit10ppm"
+standard_vdChargeAndLight.OpDetWaveformLabel: "opdigi10ppm"
+standard_vdChargeAndLight.IsVD: true
+standard_vdChargeAndLight.DistanceCut: 360.0
+standard_vdChargeAndLight.Baseline: 500.0
+standard_vdChargeAndLight.PE: 10.0
+
+
+
+
+END_PROLOG
