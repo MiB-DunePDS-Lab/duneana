@@ -23,6 +23,8 @@
 
 // LArSoft includes
 #include "larcore/Geometry/Geometry.h"
+#include "larcore/Geometry/WireReadout.h"
+#include "larcore/CoreUtils/ServiceUtil.h"
 #include "lardataobj/RecoBase/OpFlash.h"
 #include "lardataobj/RecoBase/OpHit.h"
 #include "lardataobj/RecoBase/Hit.h"
@@ -31,6 +33,7 @@
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 #include "lardata/DetectorInfoServices/DetectorClocksService.h"
+#include "lardata/Utilities/AssociationUtil.h"
 #include "larsim/MCCheater/PhotonBackTrackerService.h"
 #include "larsim/MCCheater/ParticleInventoryService.h"
 #include "lardataobj/Simulation/SimEnergyDeposit.h"
@@ -413,7 +416,8 @@ namespace opdet {
   void ChargeAndLightAna::analyze(const art::Event& evt)
   {
     // Get the required services
-    art::ServiceHandle< geo::Geometry > geom;
+    art::ServiceHandle<geo::Geometry> geom;
+    auto const& wireReadout = art::ServiceHandle<geo::WireReadout>()->Get();
     art::ServiceHandle< cheat::PhotonBackTrackerService > pbt;
     art::ServiceHandle<cheat::BackTrackerService> bt_serv;
     art::ServiceHandle< cheat::ParticleInventoryService > pinv;
@@ -499,7 +503,7 @@ namespace opdet {
      unsigned int iC = 0;   
      for (auto hit:hitlist) {     
       iC = hit->OpChannel();
-      unsigned int iOD = geom->OpDetFromOpChannel(iC);
+      unsigned int iOD = wireReadout.OpDetFromOpChannel(iC);
       fPEperOpDet[iOD] += hit->PE();
      }   
 
@@ -759,12 +763,12 @@ if (nSimEnergyDeposits == 0) return;
     for(size_t iHit = 0; iHit < hitListHandle->size(); ++iHit){
       //thishit=static_cast<int>(iHit);  
       art::Ptr<recob::Hit> hitPtr(hitListHandle, iHit);
-	if(geom->SignalType(hitPtr->Channel()) == geo::kCollection){
+	if(wireReadout.SignalType(hitPtr->Channel()) == geo::kCollection){
      // if(hitPtr->View() == wirePlane){
 	collpl++;
 	fHitCharge.emplace_back(hitPtr->Integral());
 	fTotalCharge += hitPtr->Integral();        
-	fADCSum += hitPtr->SummedADC();
+	fADCSum += hitPtr->ROISummedADC();
 	fPeakAmplitude += hitPtr->PeakAmplitude();
 	fHitMultiplicity.emplace_back(hitPtr->Multiplicity());
 	//fHitPeakTimeTicks.emplace_back(hitPtr->PeakTime());
