@@ -23,16 +23,16 @@ art_make( BASENAME_ONLY ALLOW_UNDERSCORES
     art::Framework_Services_Optional_RandomNumberGenerator_service
     art::Persistency_Common
     art::Utilities 
-    canvas::canvas
+   canvas::canvas
     cetlib::cetlib 
-    cetlib_except::cetlib_except 
-    ROOT_BASIC_LIB_LIST
+   cetlib_except::cetlib_except 
     Boost::filesystem
 
   MODULE_LIBRARIES
     dunecore::DuneObj
     lardataalg::DetectorInfo
     lardataobj::RecoBase
+    lardata::headers
     larana::OpticalDetector
     larana::OpticalDetector_OpHitFinder
     larcorealg::Geometry
@@ -49,16 +49,17 @@ art_make( BASENAME_ONLY ALLOW_UNDERSCORES
     art::Framework_Services_Registry
     art_root_io::tfile_support
     ROOT::Core
+  ROOT::Tree
+	ROOT::Graf
     art_root_io::TFileService_service
     art::Framework_Services_Optional_RandomNumberGenerator_service
     art::Persistency_Provenance
     art::Persistency_Common
     art::Utilities 
-    canvas::canvas
+   canvas::canvas
     cetlib::cetlib 
-    cetlib_except::cetlib_except
-    CLHEP
-    ROOT_BASIC_LIB_LIST
+   cetlib_except::cetlib_except
+   CLHEP::CLHEP
     Boost::filesystem
     larpandora::LArPandoraInterface
     dunereco::AnaUtils
@@ -66,6 +67,7 @@ art_make( BASENAME_ONLY ALLOW_UNDERSCORES
   SERVICE_LIBRARIES
     larcorealg::Geometry
     larcore::Geometry_Geometry_service
+    lardata::headers
     duneopdet::OpticalDetector
     fhiclcpp::fhiclcpp
     messagefacility::MF_MessageLogger
@@ -77,18 +79,16 @@ art_make( BASENAME_ONLY ALLOW_UNDERSCORES
     art_root_io::TFileService_service
     art::Persistency_Common
     art::Utilities 
-    canvas::canvas
+   canvas::canvas
     cetlib::cetlib cetlib_except
-    CLHEP
-    ROOT_BASIC_LIB_LIST                                
+   CLHEP::CLHEP
     Boost::filesystem
 
 )
 
-file(GLOB dat_files *.dat)
-install_fw( LIST ${dat_files} )
+#file(GLOB dat_files *.dat)
+#install_fw( LIST ${dat_files} )
 
 install_headers()
 install_fhicl()
 install_source()
-
