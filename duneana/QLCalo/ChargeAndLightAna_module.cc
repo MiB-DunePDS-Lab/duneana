@@ -100,24 +100,23 @@ namespace opdet {
     // go from this custom example to your own task.
 
     // The parameters we'll read from the .fcl file.
-    std::string fEdepLabel;                // Input tag for Energy deposit collection
-    std::string felecDriftLabel;           // Input tag for electron Drift collection
-    std::string fOpFlashModuleLabel;       // Input tag for OpFlash collection
-    std::string fOpHitModuleLabel;         // Input tag for OpHit collection
-    std::string fSignalLabel;              // Input tag for the signal generator label
-    std::string fGeantLabel;               // Input tag for GEANT
-    std::string fHitsLabel;                //Input tag for Charge hits
-    std::string fParticleModuleLabel;       //Input tag for reco Particles
-    std::string fTrackLabel;                //Input tag for reco Tracks
-    std::string fShowerLabel;                //Input tag for reco Showers
-    std::string fHitToSpacePointLabel;      //Input tag for SpacePoints
-    bool	fBeam;                      // Simulated events are beam neutrinos
-    bool        fIsVD;                     // Is it a FD2-VD sample?
+    std::string fEdepLabel;             // Input tag for Energy deposit collection
+    std::string felecDriftLabel;        // Input tag for electron Drift collection
+    std::string fOpFlashModuleLabel;    // Input tag for OpFlash collection
+    std::string fOpHitModuleLabel;      // Input tag for OpHit collection
+    std::string fSignalLabel;           // Input tag for the signal generator label
+    std::string fGeantLabel;            // Input tag for GEANT
+    std::string fHitsLabel;             // Input tag for Charge hits
+    std::string fParticleModuleLabel;   // Input tag for reco Particles
+    std::string fTrackLabel;            // Input tag for reco Tracks
+    std::string fShowerLabel;           // Input tag for reco Showers
+    std::string fHitToSpacePointLabel;  // Input tag for SpacePoints
+    std::string fLightMap;              // Visibility map file
+    bool	fBeam;                        // Simulated events are beam neutrinos
+    bool  fIsVD;                        // Is it a FD2-VD sample?
 
     TTree * fChargeLightTree;
     
-    //LightMap variables
-    TFile *fLightMap;
     TH3D *h3LightMap;
     Float_t  fFvis;
     
@@ -216,6 +215,7 @@ namespace opdet {
     Float_t  fPurity;
     Float_t  fDistance;
     Int_t    fNHitOpDets;
+    
     std::vector< Float_t > fPEsPerOpDetVector;
     
         
@@ -247,10 +247,10 @@ namespace opdet {
     std::string fOpDetWaveformLabel;
     float fBaseline;
     float fPE;
-    TTree * fCountTree;
     Int_t fnwaveforms1pe;
     Int_t fnwaveforms2pe;
     Int_t fnwaveforms3pe;
+    TTree * fCountTree;
     
   };
 
@@ -267,16 +267,16 @@ namespace opdet {
   {
 
     // Indicate that the Input Module comes from .fcl
-    fEdepLabel          = pset.get<std::string>("EdepLabel","IonAndScint");
-    felecDriftLabel     = pset.get<std::string>("elecDriftLabel","elecDrift");
-    fOpFlashModuleLabel = pset.get<std::string>("OpFlashModuleLabel");
-    fOpHitModuleLabel   = pset.get<std::string>("OpHitModuleLabel");
-    fHitsLabel          = pset.get<std::string>("HitsLabel");
-    fParticleModuleLabel= pset.get<std::string>("ParticleModuleLabel");
-    fShowerLabel        = pset.get<std::string>("ShowerLabel");
-    fTrackLabel         = pset.get<std::string>("TrackLabel");
-    fSignalLabel        = pset.get<std::string>("SignalLabel");
-    fGeantLabel         = pset.get<std::string>("GeantLabel");
+    fEdepLabel             = pset.get<std::string>("EdepLabel","IonAndScint");
+    felecDriftLabel        = pset.get<std::string>("elecDriftLabel","elecDrift");
+    fOpFlashModuleLabel    = pset.get<std::string>("OpFlashModuleLabel");
+    fOpHitModuleLabel      = pset.get<std::string>("OpHitModuleLabel");
+    fHitsLabel             = pset.get<std::string>("HitsLabel");
+    fParticleModuleLabel   = pset.get<std::string>("ParticleModuleLabel");
+    fShowerLabel           = pset.get<std::string>("ShowerLabel");
+    fTrackLabel            = pset.get<std::string>("TrackLabel");
+    fSignalLabel           = pset.get<std::string>("SignalLabel");
+    fGeantLabel            = pset.get<std::string>("GeantLabel");
     fHitToSpacePointLabel  = pset.get<std::string>("HitToSpacePointLabel");
     fIsVD               = pset.get<bool>("IsVD");
     fBeam               = pset.get<bool>("Beam");
@@ -291,93 +291,94 @@ namespace opdet {
     fOpDetWaveformLabel = pset.get<std::string>("OpDetWaveformLabel","");
     fBaseline           = pset.get<float>("Baseline", 1500.);
     fPE                 = pset.get<float>("PE", 18.);
+    fLightMap           = pset.get< std::string >("LightMap");
 
     art::ServiceHandle< art::TFileService > tfs;
-
+    
     fChargeLightTree = tfs->make<TTree>("ChargeLightTree","ChargeLightTree");
-    fChargeLightTree->Branch("EventID",                     &fEventID,   "EventID/I");
-    fChargeLightTree->Branch("TrueX",                       &fTrueX,     "TrueX/F");
-    fChargeLightTree->Branch("TrueY",                       &fTrueY,     "TrueY/F");
-    fChargeLightTree->Branch("TrueZ",                       &fTrueZ,     "TrueZ/F");
-    fChargeLightTree->Branch("TrueT",                       &fTrueT,     "TrueT/F");
-    fChargeLightTree->Branch("DetectedT",                   &fDetectedT, "DetectedT/F");
-    fChargeLightTree->Branch("TrueE",                       &fTrueE,     "TrueE/F");
-    fChargeLightTree->Branch("TruePDG",                     &fTruePDG,   "TruePDG/I");
-    fChargeLightTree->Branch("TrueCCNC",                    &fTrueCCNC,  "TrueCCNC/I");
-    fChargeLightTree->Branch("NFlashes",                    &fNFlashes,  "NFlashes/I");
-    /*fChargeLightTree->Branch("FlashIDVector",               &fFlashIDVector);
-    fChargeLightTree->Branch("YCenterVector",               &fYCenterVector);
-    fChargeLightTree->Branch("ZCenterVector",               &fZCenterVector);
-    fChargeLightTree->Branch("YWidthVector",                &fYWidthVector);
-    fChargeLightTree->Branch("ZWidthVector",                &fZWidthVector);
-    fChargeLightTree->Branch("TimeVector",                  &fTimeVector);
-    fChargeLightTree->Branch("TimeWidthVector",             &fTimeWidthVector);
-    fChargeLightTree->Branch("TimeDiffVector",              &fTimeDiffVector);
-    fChargeLightTree->Branch("TotalPEVector",               &fTotalPEVector); */
-    fChargeLightTree->Branch("SumPE",                       &fSumPE,      "SumPE/F");
-    fChargeLightTree->Branch("Fvis",                        &fFvis,      "Fvis/F");
-    fChargeLightTree->Branch("NOpDets",                     &fNOpDets, "NOpDets/I");
-   // fChargeLightTree->Branch("NHitOpDetVector",             &fNHitOpDetVector);
-    fChargeLightTree->Branch("OpHitPeakTime",               &fOpHitPeakTime);
-    fChargeLightTree->Branch("OpHitArea",    		      &fOpHitArea ,      "OpHitArea/F");
-    //fChargeLightTree->Branch("Purity",                      &fPurityVector);
-    //fChargeLightTree->Branch("Distance",                    &fDistanceVector);
-    //fChargeLightTree->Branch("RecoXVector",                 &fRecoXVector);
-    fChargeLightTree->Branch("TruePxallpart",               &fTruePxallpart);
-    fChargeLightTree->Branch("TruePyallpart",               &fTruePyallpart);
-    fChargeLightTree->Branch("TruePzallpart",               &fTruePzallpart);
-    fChargeLightTree->Branch("TrueEallpart",                &fTrueEallpart);
-    fChargeLightTree->Branch("TrueAllPDG",                  &fTrueAllPDG);
-    fChargeLightTree->Branch("PointX",     		     &fPointX);
-    fChargeLightTree->Branch("PointY",     		     &fPointY);
-    fChargeLightTree->Branch("PointZ",     		     &fPointZ);
-    fChargeLightTree->Branch("GammaScint",     	     &fGammaScint);
-    fChargeLightTree->Branch("PEperOpDet",     	     &fPEperOpDet);
-    fChargeLightTree->Branch("EnergyDepositionVector",      &fEnergyDepositionVector);
-    fChargeLightTree->Branch("fStepLCumVector",             &fStepLCumVector);
-    //fChargeLightTree->Branch("fStepEdepCumVector",          &fStepEdepCumVector);
-    fChargeLightTree->Branch("TotEdep",                     &fTotEdep, "TotEdep/F");
-    //fChargeLightTree->Branch("StepLengthEdep",              &fStepLength);
-    fChargeLightTree->Branch("LdepSim",                     &fLdepSim,   "LdepSim/F");
-    //fChargeLightTree->Branch("LdepGeom",                    &fLdepGeom,"LdepGeom/F");
-    fChargeLightTree->Branch("TotEion",                     &fTotEion, "TotEion/I");
-    fChargeLightTree->Branch("TotGammaScint",               &fTotGammaScint,"TotGammaScint/I");
-    fChargeLightTree->Branch("HitCharge",                   &fHitCharge);    
-    fChargeLightTree->Branch("TotalCharge",                 &fTotalCharge, "TotalCharge/F");
-    fChargeLightTree->Branch("TotalChargeCorr",            &fTotalChargeCorr, "TotalChargeCorr/F");
-    fChargeLightTree->Branch("ADCSum",                      &fADCSum,      "ADCSum/F");
-    fChargeLightTree->Branch("PeakAmplitude",               &fPeakAmplitude,"PeakAmplitude/F");
-    fChargeLightTree->Branch("HitMultiplicity",             &fHitMultiplicity);
-    //fChargeLightTree->Branch("FirstHitTime",                &fFirstHitTime,  "FirstHitTime/F");
-    //fChargeLightTree->Branch("LastHitTime",                 &fLastHitTime,  "LastHitTime/F");
-    fChargeLightTree->Branch("MeanHitTime",                 &fMeanHitTime, "MeanHitTime/F");
-    fChargeLightTree->Branch("HitPeakTime",                 &fHitPeakTime);
-    //fChargeLightTree->Branch("HitPeakTimeTicks",            &fHitPeakTimeTicks);
-    fChargeLightTree->Branch("HitDist",                     &fHitDist,  "HitDist/F");
-    fChargeLightTree->Branch("NTrack",                      &fNTrack, "NTrack/I");
-    fChargeLightTree->Branch("TrkLengthVector",             &fTrkLengthVector);
-    //fChargeLightTree->Branch("TrkEnVector",                 &fTrkEnVector);
-    //fChargeLightTree->Branch("TrkdEdxVector",               &fTrkdEdxVector);
-    //fChargeLightTree->Branch("SelTrkEn",                    &fSelTrkEn, "SelTrkEn/F");
-    fChargeLightTree->Branch("SelTrkLength",                &fSelTrkLength, "SelTrkLength/F");
+    fChargeLightTree->Branch("EventID",                 &fEventID,   "EventID/I");
+    fChargeLightTree->Branch("TrueX",                   &fTrueX,     "TrueX/F");
+    fChargeLightTree->Branch("TrueY",                   &fTrueY,     "TrueY/F");
+    fChargeLightTree->Branch("TrueZ",                   &fTrueZ,     "TrueZ/F");
+    fChargeLightTree->Branch("TrueT",                   &fTrueT,     "TrueT/F");
+    fChargeLightTree->Branch("DetectedT",               &fDetectedT, "DetectedT/F");
+    fChargeLightTree->Branch("TrueE",                   &fTrueE,     "TrueE/F");
+    fChargeLightTree->Branch("TruePDG",                 &fTruePDG,   "TruePDG/I");
+    fChargeLightTree->Branch("TrueCCNC",                &fTrueCCNC,  "TrueCCNC/I");
+    fChargeLightTree->Branch("NFlashes",                &fNFlashes,  "NFlashes/I");
+    /*fChargeLightTree->Branch("FlashIDVector",         &fFlashIDVector);
+    fChargeLightTree->Branch("YCenterVector",           &fYCenterVector);
+    fChargeLightTree->Branch("ZCenterVector",           &fZCenterVector);
+    fChargeLightTree->Branch("YWidthVector",            &fYWidthVector);
+    fChargeLightTree->Branch("ZWidthVector",            &fZWidthVector);
+    fChargeLightTree->Branch("TimeVector",              &fTimeVector);
+    fChargeLightTree->Branch("TimeWidthVector",         &fTimeWidthVector);
+    fChargeLightTree->Branch("TimeDiffVector",          &fTimeDiffVector);
+    fChargeLightTree->Branch("TotalPEVector",           &fTotalPEVector); */
+    fChargeLightTree->Branch("SumPE",                   &fSumPE,      "SumPE/F");
+    fChargeLightTree->Branch("Fvis",                    &fFvis,       "Fvis/F");
+    fChargeLightTree->Branch("NOpDets",                 &fNOpDets,    "NOpDets/I");
+   // fChargeLightTree->Branch("NHitOpDetVector",       &fNHitOpDetVector);
+    fChargeLightTree->Branch("OpHitPeakTime",           &fOpHitPeakTime);
+    fChargeLightTree->Branch("OpHitArea",    		        &fOpHitArea ,  "OpHitArea/F");
+    //fChargeLightTree->Branch("Purity",                &fPurityVector);
+    //fChargeLightTree->Branch("Distance",              &fDistanceVector);
+    //fChargeLightTree->Branch("RecoXVector",           &fRecoXVector);
+    fChargeLightTree->Branch("TruePxallpart",           &fTruePxallpart);
+    fChargeLightTree->Branch("TruePyallpart",           &fTruePyallpart);
+    fChargeLightTree->Branch("TruePzallpart",           &fTruePzallpart);
+    fChargeLightTree->Branch("TrueEallpart",            &fTrueEallpart);
+    fChargeLightTree->Branch("TrueAllPDG",              &fTrueAllPDG);
+    fChargeLightTree->Branch("PointX",     		          &fPointX);
+    fChargeLightTree->Branch("PointY",     		          &fPointY);
+    fChargeLightTree->Branch("PointZ",     		          &fPointZ);
+    fChargeLightTree->Branch("GammaScint",     	        &fGammaScint);
+    fChargeLightTree->Branch("PEperOpDet",     	        &fPEperOpDet);
+    fChargeLightTree->Branch("EnergyDepositionVector",  &fEnergyDepositionVector);
+    fChargeLightTree->Branch("fStepLCumVector",         &fStepLCumVector);
+    //fChargeLightTree->Branch("fStepEdepCumVector",    &fStepEdepCumVector);
+    fChargeLightTree->Branch("TotEdep",                 &fTotEdep, "TotEdep/F");
+    //fChargeLightTree->Branch("StepLengthEdep",        &fStepLength);
+    fChargeLightTree->Branch("LdepSim",                 &fLdepSim, "LdepSim/F");
+    //fChargeLightTree->Branch("LdepGeom",              &fLdepGeom,"LdepGeom/F");
+    fChargeLightTree->Branch("TotEion",                 &fTotEion, "TotEion/I");
+    fChargeLightTree->Branch("TotGammaScint",           &fTotGammaScint,"TotGammaScint/I");
+    fChargeLightTree->Branch("HitCharge",               &fHitCharge);    
+    fChargeLightTree->Branch("TotalCharge",             &fTotalCharge, "TotalCharge/F");
+    fChargeLightTree->Branch("TotalChargeCorr",         &fTotalChargeCorr, "TotalChargeCorr/F");
+    fChargeLightTree->Branch("ADCSum",                  &fADCSum,    "ADCSum/F");
+    fChargeLightTree->Branch("PeakAmplitude",           &fPeakAmplitude,"PeakAmplitude/F");
+    fChargeLightTree->Branch("HitMultiplicity",         &fHitMultiplicity);
+    //fChargeLightTree->Branch("FirstHitTime",          &fFirstHitTime,  "FirstHitTime/F");
+    //fChargeLightTree->Branch("LastHitTime",           &fLastHitTime,  "LastHitTime/F");
+    fChargeLightTree->Branch("MeanHitTime",             &fMeanHitTime, "MeanHitTime/F");
+    fChargeLightTree->Branch("HitPeakTime",             &fHitPeakTime);
+    //fChargeLightTree->Branch("HitPeakTimeTicks",      &fHitPeakTimeTicks);
+    fChargeLightTree->Branch("HitDist",                 &fHitDist,  "HitDist/F");
+    fChargeLightTree->Branch("NTrack",                  &fNTrack, "NTrack/I");
+    fChargeLightTree->Branch("TrkLengthVector",         &fTrkLengthVector);
+    //fChargeLightTree->Branch("TrkEnVector",           &fTrkEnVector);
+    //fChargeLightTree->Branch("TrkdEdxVector",         &fTrkdEdxVector);
+    //fChargeLightTree->Branch("SelTrkEn",              &fSelTrkEn, "SelTrkEn/F");
+    fChargeLightTree->Branch("SelTrkLength",            &fSelTrkLength, "SelTrkLength/F");
     fChargeLightTree->Branch("SelTrkPointX",     	      &fSelTrkPointX);
     fChargeLightTree->Branch("SelTrkPointY",     	      &fSelTrkPointY);
     fChargeLightTree->Branch("SelTrkPointZ",     	      &fSelTrkPointZ);        
-    fChargeLightTree->Branch("PandoraVtxX",                 &fPandoraVtxX,"PandoraVtxX/F");
-    fChargeLightTree->Branch("PandoraVtxY",                 &fPandoraVtxY,"PandoraVtxY/F");
-    fChargeLightTree->Branch("PandoraVtxZ",                 &fPandoraVtxZ,"PandoraVtxZ/F");
-    fChargeLightTree->Branch("HitToXVector",		      &fHitToXVector);
-    fChargeLightTree->Branch("HitToYVector",		      &fHitToYVector);
-    fChargeLightTree->Branch("HitToZVector",		      &fHitToZVector);
-    fChargeLightTree->Branch("SpacePointX",		      &fSpacePointX);
-    fChargeLightTree->Branch("SpacePointY",		      &fSpacePointY);
-    fChargeLightTree->Branch("SpacePointZ",		      &fSpacePointZ);
-    fChargeLightTree->Branch("HitSPCharge",                 &fHitSPCharge);
+    fChargeLightTree->Branch("PandoraVtxX",             &fPandoraVtxX,"PandoraVtxX/F");
+    fChargeLightTree->Branch("PandoraVtxY",             &fPandoraVtxY,"PandoraVtxY/F");
+    fChargeLightTree->Branch("PandoraVtxZ",             &fPandoraVtxZ,"PandoraVtxZ/F");
+    fChargeLightTree->Branch("HitToXVector",		        &fHitToXVector);
+    fChargeLightTree->Branch("HitToYVector",		        &fHitToYVector);
+    fChargeLightTree->Branch("HitToZVector",		        &fHitToZVector);
+    fChargeLightTree->Branch("SpacePointX",		          &fSpacePointX);
+    fChargeLightTree->Branch("SpacePointY",		          &fSpacePointY);
+    fChargeLightTree->Branch("SpacePointZ",		          &fSpacePointZ);
+    fChargeLightTree->Branch("HitSPCharge",             &fHitSPCharge);
 
 
     if (!fOpDetWaveformLabel.empty()) {
       fCountTree = tfs->make<TTree>("CountWaveforms","CountWaveforms");
-      fCountTree->Branch("EventID",       &fEventID,      "EventID/I");
+      fCountTree->Branch("EventID",       &fEventID,       "EventID/I");
       fCountTree->Branch("nwaveforms1pe", &fnwaveforms1pe, "nwaveforms1pe/I");
       fCountTree->Branch("nwaveforms2pe", &fnwaveforms2pe, "nwaveforms2pe/I");
       fCountTree->Branch("nwaveforms3pe", &fnwaveforms3pe, "nwaveforms3pe/I");
@@ -394,24 +395,24 @@ namespace opdet {
   void ChargeAndLightAna::beginJob()
   {
   
+   //Open the light map rootfile 
    std::cout << "Opening the light map file" << std::endl;
-   //Open the light map rootfile   
-   if (fIsVD) {
-    fLightMap = new TFile ("/dune/data2/users/dguffant/QLcalo/combined_visibility_map.root", "READ");     
-      if (fLightMap->IsOpen()) h3LightMap = (TH3D *) fLightMap->Get("h3VisMap_Ar_Xe10ppm");
-      else std::cout << "Light Map VD not found!!" << std::endl; 
-      std::cout<< "Light Map VD found!" << std::endl;
-     } //open the light map for the VD
-   
+   TFile* fLightMapfile = TFile::Open(fLightMap.c_str());
+  
+  if (fLightMapfile && !fLightMapfile->IsZombie()) {
+     
+     if (fIsVD) {
+        h3LightMap = (TH3D*) fLightMapfile->Get("h3VisMap_Ar_Xe10ppm");
+        std::cout<< "Light Map VD found!" << std::endl;
+      } //open the light map for the VD
+    
     else { 
-      fLightMap = new TFile ("/dune/app/users/dguffant/test001/lightmap_h3.root","READ");     
-       if (fLightMap->IsOpen()) h3LightMap = (TH3D *) fLightMap->Get("h3VisMap");
-       else std::cout << "Light Map HD not found!!" << std::endl;
-       std::cout<< "Light Map HD found!" << std::endl;
-      } //light map for the HD
-         
+        h3LightMap = (TH3D*) fLightMapfile->Get("h3VisMap_proj_0_1_2");
+        std::cout<< "Light Map HD found!" << std::endl;
+        } //light map for the HD
+   }       
+    
   }
-
   //-----------------------------------------------------------------------
   void ChargeAndLightAna::analyze(const art::Event& evt)
   {
@@ -1091,7 +1092,7 @@ for (const art::Ptr<recob::PFParticle> &particle : particles){
       //std::cout << "SP in collection " << std::endl;
 	if (h->SignalType() == geo::kCollection){
 	  spcollp++;
-	  //std::cout << "SP numero" << spcollp<<  std::endl;
+	  std::cout << "SP numero" << spcollp<<  std::endl;
 	  art::Ptr<recob::SpacePoint> hitSP(SPHandle, i);
 	  spx = hitSP->XYZ()[0];
 	  spy = hitSP->XYZ()[1];
@@ -1104,7 +1105,7 @@ for (const art::Ptr<recob::PFParticle> &particle : particles){
 	  fHitSPCharge.emplace_back(spq);
 	  SPtotcharge += spq;
 	  
-	  //std::cout << "spx " << spx << ", spy " << spy << ", spz " << spz <<", spq " << spq << std::endl;
+	  std::cout << "spx " << spx << ", spy " << spy << ", spz " << spz <<", spq " << spq << std::endl;
 	  
 	  
 	  //std::cout << "Visibility " << std::endl;
@@ -1113,8 +1114,8 @@ for (const art::Ptr<recob::PFParticle> &particle : particles){
     
           //std::cout<<" ---> f is: "<<binval<< std::endl;
           //fvis_point = binval*spq;
-
-
+         
+           
 	  fvis_point = GetFvisFromHisto(spx, spy, spz, spq);
 	  //std::cout << "fvis_point = " << fvis_point << " point " << spcollp << std::endl;
 	  fvis_tmp += fvis_point;
@@ -1193,8 +1194,7 @@ for (const art::Ptr<recob::PFParticle> &particle : particles){
   //-----------------------------------------------------------------------
 
  void ChargeAndLightAna::endJob(){
- 
- 
+  
  }
  
   float ChargeAndLightAna::GetFvisFromHisto(float x, float y, float z, float q){
