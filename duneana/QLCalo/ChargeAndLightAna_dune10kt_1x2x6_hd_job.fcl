@@ -1,0 +1,48 @@
+#include "ChargeAndLightAna.fcl"
+#include "opticaldetectormodules_dune.fcl"
+#include "opticaldetectorservices_dune.fcl"
+#include "services_dune.fcl"
+#include "tools_dune.fcl"
+
+
+process_name: CaLo
+
+services:
+{
+  @table::dunefd_services
+  TFileService: { fileName: "charge_light_hist.root" }
+  TimeTracker:       {}
+  RandomNumberGenerator: {} #ART native random number generator
+  AuxDetGeometry: @local::dune10kt_1x2x6_auxdet_geo
+  Geometry:       @local::dune10kt_1x2x6_v6_refactored_geo
+}
+
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1      # Number of events to create
+
+}
+
+
+physics:
+{
+   analyzers:
+   {
+     calana:  @local::standard_ChargeAndLight
+   }
+      
+   analyzeIt: [ calana ]
+   stream1:   [ out1 ]
+   end_paths: [analyzeIt, stream1]  
+}
+
+outputs:
+{
+   out1:
+   {
+      module_type: RootOutput
+      fileName:    "charge_light_gen.root"
+    }
+
+}
