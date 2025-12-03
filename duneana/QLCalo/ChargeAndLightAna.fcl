@@ -14,13 +14,14 @@ standard_ChargeAndLight:
    elecDriftLabel:       "tpcrawdecoder:SimpleSC" #Change to tpcrawdecoder:SimpleSC for wirecell #original "elecDrift"
    SignalLabel:          "generator"
    GeantLabel:           "largeant"
-   IsVD:                 false   #If a VD sample, we may want flashes recorded between FC and cryostat lateral      
+   LightMap:             "/exp/dune/data/users/jdelgadg/data_calorimetry/my_file.root"
+   IsVD:                  false   #If a VD sample, we may want flashes recorded between FC and cryostat lateral      
    HitsLabel:            "gaushit"  
    ParticleModuleLabel:  "pandora"
    TrackLabel:           "pandoraTrack"
    ShowerLabel:          "pandoraShower"
-   HitToSpacePointLabel:   "pandora"  
-   Beam:		 false 		 
+   HitToSpacePointLabel: "pandora"  
+   Beam:		             false 		 
    DistanceCut:          240 # cm
    NBinsE:               50
    LowE:                 0
