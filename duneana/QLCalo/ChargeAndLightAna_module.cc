@@ -51,6 +51,7 @@
 #include "lardataobj/RecoBase/SpacePoint.h"
 #include "larreco/SpacePointSolver/Solver.h"
 #include "larsim/IonizationScintillation/ISCalcCorrelated.h"
+#include "lardata/DetectorInfoServices/LArPropertiesService.h"
 
 // ART includes.
 #include "art/Framework/Core/EDAnalyzer.h"
@@ -587,52 +588,53 @@ namespace opdet {
        fPointZ.emplace_back(energyDepositlist[i]->StartZ());
        fGammaScint.emplace_back(energyDepositlist[i]->NumPhotons());
        fEdep = energyDepositlist[i]->E(); 
-	   fEnergyDepositionVector.emplace_back(fEdep);
-	   fTotEdep += fEdep;
+	     fEnergyDepositionVector.emplace_back(fEdep);
+	     fTotEdep += fEdep;
        fStepEdepCumVector.emplace_back(fTotEdep);
-	   fTotGammaScint += energyDepositlist[i]->NumPhotons();
-	   fTotEion += energyDepositlist[i]->NumElectrons();
-	   //find starting point, scan along z
-	   thisposition = energyDepositlist[i]->StartZ();
-	   if(thisposition < edepstartz ){
-	      edepstartz=thisposition;
-	      istart=i;
-	   }
-	   //find end point, scan along z
-	   thisposition = energyDepositlist[i]->EndZ();
-	   if(thisposition > edependz ){
-	      edependz=thisposition;
-	      iend=i;
-	   }
-	   //save single steps of edep length
-	   fStepLength.emplace_back( energyDepositlist[i]->StepLength()); //in cm
-	   //sum of single steps of edep length
-	   fLdepSim += energyDepositlist[i]->StepLength(); //in cm
-	   fStepLCumVector.emplace_back(fLdepSim); //cumulative of energy in each step
-	   dedxsteps += fEdep/fLdepSim; //in MeV/cm
-	 }   
+	     fTotGammaScint += energyDepositlist[i]->NumPhotons();
+	     fTotEion += energyDepositlist[i]->NumElectrons();
+	     //find starting point, scan along z
+	     thisposition = energyDepositlist[i]->StartZ();
+	     if(thisposition < edepstartz ){
+	       edepstartz=thisposition;
+	       istart=i;
+	     }
+	     //find end point, scan along z
+	     thisposition = energyDepositlist[i]->EndZ();
+	     if(thisposition > edependz ){
+	       edependz=thisposition;
+	       iend=i;
+	     }
+	     //save single steps of edep length
+	     fStepLength.emplace_back( energyDepositlist[i]->StepLength()); //in cm
+	     //sum of single steps of edep length
+	     fLdepSim += energyDepositlist[i]->StepLength(); //in cm
+	     fStepLCumVector.emplace_back(fLdepSim); //cumulative of energy in each step
+	  
+	     dedxsteps += fEdep/fLdepSim; //in MeV/cm
+	   }   
 	
-	 std::cout<<"Number of deposits: "<<nSimEnergyDeposits<<" Single step L(cm): "<<energyDepositlist[2]->StepLength()<<" Total number of emittend photons: "<<fTotGammaScint<<" and ionization electrons: "<<fTotEion<<" ---> Check w.r.t path length: "<<std::endl;
+	   std::cout<<"Number of deposits: "<<nSimEnergyDeposits<<" Single step L(cm): "<<energyDepositlist[2]->StepLength()<<" Total number of emittend photons: "<<fTotGammaScint<<" and ionization electrons: "<<fTotEion<<" ---> Check w.r.t path length: "<<std::endl;
 
-	 edepstartx=energyDepositlist[istart]->StartX();
-	 edepstarty=energyDepositlist[istart]->StartY();
-	 edependx=energyDepositlist[iend]->EndX();
-	 edependy=energyDepositlist[iend]->EndY();
-	 double diffx=TMath::Power((edependx-edepstartx),2);
-	 double diffy=TMath::Power((edependy-edepstarty),2);
-	 double diffz=TMath::Power((edependz-edepstartz),2);
-	 fLdepGeom=TMath::Sqrt(diffx+diffy+diffz);
+	   edepstartx=energyDepositlist[istart]->StartX();
+	   edepstarty=energyDepositlist[istart]->StartY();
+	   edependx=energyDepositlist[iend]->EndX();
+	   edependy=energyDepositlist[iend]->EndY();
+	   double diffx=TMath::Power((edependx-edepstartx),2);
+	   double diffy=TMath::Power((edependy-edepstarty),2);
+	   double diffz=TMath::Power((edependz-edepstartz),2);
+	   fLdepGeom=TMath::Sqrt(diffx+diffy+diffz);
 
-	 //std::cout<<"Scan in Z, Start of energy deposition (x,y,z): "<<edepstartx<<" "<<edepstarty<<" "<<edepstartz<<" End (x,y,z): "<<edependx<<" "<<edependy<<" "<<edependz<<" cm --> length: "<<fLdepGeom<<" cm"<<std::endl;
-	 //std::cout<<"Gamma/path length: "<<fTotGammaScint/fLdepSim<<" Ion. electrons/path length: "<<fTotEion/fLdepSim<<std::endl;
-	 fGammaScintdE=fTotGammaScint/fTotEdep;
-	 fEiondE=fTotEion/fTotEdep;
+	   //std::cout<<"Scan in Z, Start of energy deposition (x,y,z): "<<edepstartx<<" "<<edepstarty<<" "<<edepstartz<<" End (x,y,z): "<<edependx<<" "<<edependy<<" "<<edependz<<" cm --> length: "<<fLdepGeom<<" cm"<<std::endl;
+	   //std::cout<<"Gamma/path length: "<<fTotGammaScint/fLdepSim<<" Ion. electrons/path length: "<<fTotEion/fLdepSim<<std::endl;
+	   fGammaScintdE=fTotGammaScint/fTotEdep;
+	   fEiondE=fTotEion/fTotEdep;
      dEdx=fTotEdep/fLdepSim;
-	 //std::cout<<"Gamma/TotEdep: "<<fGammaScintdE<<" Ion. electrons/TotEdep: "<<fEiondE<<std::endl;
-	 //std::cout<<"(Gamma/TotEdep)/dx: "<<fGammaScintdE/fLdepSim<<" (Ion.electrons/TotEdep)/dx: "<<fEiondE/fLdepSim<<std::endl;
-	 //std::cout<<"Sum of every step de/dx: "<<dedxsteps<<" MeV/cm, ...divinding TotEdep by Total L--> "<<std::endl;  
-	 std::cout<<"Total dE/dX: "<<dEdx<<" (dx is sum of steps L). MeV/cm"<<std::endl;
-   }else{
+	   //std::cout<<"Gamma/TotEdep: "<<fGammaScintdE<<" Ion. electrons/TotEdep: "<<fEiondE<<std::endl;
+	   //std::cout<<"(Gamma/TotEdep)/dx: "<<fGammaScintdE/fLdepSim<<" (Ion.electrons/TotEdep)/dx: "<<fEiondE/fLdepSim<<std::endl;
+	   //std::cout<<"Sum of every step de/dx: "<<dedxsteps<<" MeV/cm, ...divinding TotEdep by Total L--> "<<std::endl;  
+	   std::cout<<"Total dE/dX: "<<dEdx<<" (dx is sum of steps L). MeV/cm"<<std::endl;
+	 }else{
 	   mf::LogWarning("ChargeAndLightAna") << "Cannot Find Deposited Energy. Failing";
 	   return;
    }
@@ -1045,7 +1047,7 @@ namespace opdet {
     
     
    /////////////////////////
-   // Space Points	      //
+   // Space Points	   //
    /////////////////////////
    std::cout<<std::endl;
    std::cout<<"****Space points**** "<< std::endl;    
@@ -1168,15 +1170,17 @@ namespace opdet {
    //-------------------------------------------------------------------------------------------// 
    //----------------------------------------- Light -------------------------------------------//
    //-------------------------------------------------------------------------------------------//
-                       
-   f_vis_qe = fFvis * fQuantumEfficiency;// * ScintPreScale ;
+   
+   // Correct out the prescaling applied during simulation 
+   auto const *LarProp = lar::providerFrom<detinfo::LArPropertiesService>(); 
+   
+   f_vis_qe = fFvis * fQuantumEfficiency * LarProp->ScintPreScale();
    L = fSumPE/f_vis_qe; 
 
-   std::cout << "L " << L << " f_vis_qe " << f_vis_qe << "fSumPE " << fSumPE << std::endl; 
-    
-   // Correct out the prescaling applied during simulation 
-   //auto const *LarProp = lar::providerFrom<detinfo::LArPropertiesService>(); // Check this line
-   //float TotGammaScint_sps = fTotGammaScint/ LarProp->ScintPreScale();
+   std::cout << "L " << L << " f_vis_qe " << f_vis_qe << " fSumPE " << fSumPE << std::endl; 
+      
+   float TotGammaScint_sps = fTotGammaScint/ LarProp->ScintPreScale();
+   std::cout << "TotGammaScint_sps " << TotGammaScint_sps <<  std::endl; 
    //h_Gamma_L->Fill(TotGammaScint_sps,L); //fGammaScintdE? //Are they necessary?
    //h_rappLgamma->Fill(L/TotGammaScint_sps);
           
@@ -1201,7 +1205,7 @@ namespace opdet {
    if (fMakeEDepEQL) {
       h_eql_totEdep->Fill(fTotEdep,E_QL );
    }
-   //-------------------------------DELTA--------------------------------------------------------//
+   //-------------------------------DELTA------------------------------------------------------------//
    
    DeltaEql = ( E_QL - fTotEdep)/fTotEdep;
    DeltaEq = ( EQ_only - fTotEdep)/fTotEdep;
