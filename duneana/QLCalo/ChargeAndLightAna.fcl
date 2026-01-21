@@ -9,13 +9,13 @@ standard_ChargeAndLight:
    module_type:          "ChargeAndLightAna"
     
    OpFlashModuleLabel:   "opflash"  
-   OpHitModuleLabel:     "ophit" 
+   OpHitModuleLabel:     "ophitspe" 
    EdepLabel:            "IonAndScint"  
    elecDriftLabel:       "tpcrawdecoder:SimpleSC" #Change to tpcrawdecoder:SimpleSC for wirecell #original "elecDrift"
    SignalLabel:          "generator"
    GeantLabel:           "largeant"
-   LightMap:             "/exp/dune/data/users/jdelgadg/data_calorimetry/my_file.root"
-   IsVD:                  false   #If a VD sample, we may want flashes recorded between FC and cryostat lateral      
+   LightMap:             "/exp/dune/app/users/jdelgadg/larsoft_v10_08_00/srcs/duneopdet/duneopdet/PhotonPropagation/VisibilityMapTools/fcl/my_file.root"
+   IsVD:                  false   //If a VD sample, we may want flashes recorded between FC and cryostat lateral      
    HitsLabel:            "gaushit"  
    ParticleModuleLabel:  "pandora"
    TrackLabel:           "pandoraTrack"
@@ -23,12 +23,21 @@ standard_ChargeAndLight:
    HitToSpacePointLabel: "pandora"  
    Beam:		             false 		 
    DistanceCut:          240 # cm
+   QuantumEfficiency:    0.030   // 3% X-ARAPUCA efficiency
    NBinsE:               50
    LowE:                 0
    HighE:                5
    NBinsX:               50
    LowX:                -360
    HighX:                360
+   Calib:                150.38   // 1.0/6.65E-3 (https://indico.fnal.gov/event/69307/contributions/323458/attachments/191443/264752/Calibration%20with%20Stopping%20Particles%20Flash%20Talk.pdf sept2025)
+   Wion:                 23.6E-6
+   Wph:                  19.5E-6  // the same in the paper, used in protoDUNE and slides 2023  
+   Cnorm:                0.97
+   recomb:               0.63    // Still is this value regarding https://github.com/DUNE/duneana/blob/develop/duneana/CAFMaker/CAFMaker.fcl#L38 (slack Pierre Granger Oct 13/25)
+   MakeEDepEQ:           true
+   MakeEDepEQL:          true
+   MakeEDepEQLCC:        false
 }
 
 
@@ -42,8 +51,6 @@ standard_vdChargeAndLight.IsVD: true
 standard_vdChargeAndLight.DistanceCut: 360.0
 standard_vdChargeAndLight.Baseline: 500.0
 standard_vdChargeAndLight.PE: 10.0
-
-
 
 
 END_PROLOG
