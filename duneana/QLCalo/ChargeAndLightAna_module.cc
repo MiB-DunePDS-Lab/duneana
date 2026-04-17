@@ -9,6 +9,7 @@
 #include <TH1F.h>
 #include <TH2F.h>
 #include "TH3.h"
+#include "TF1.h"
 #include "TEfficiency.h"
 #include "TTree.h"
 #include "TFile.h"
@@ -119,14 +120,20 @@ namespace opdet {
     bool fMakeEDepEQ;
     bool fMakeEDepEQL;
     bool fMakeEDepEQLCC;
+    bool fMakeEdepdeltaeql;
+    bool fMakeEdepdeltaeqlCC;
+    bool fMakeEdepdeltaeqlCC_cont;
 
     TTree * fChargeLightTree;
-    Float_t  fFvis;
+    float  fFvis;
     
     // --- Histograms  
     TH3D *h3LightMap;
 
     TH1I *hAdjHits;
+    TH1F *h_deltaEql;
+    TH1F *h_deltaEqlCC;
+    TH1F *h_deltaEqlCC_cont;
     TH2F *h_eq_totEdep ;
     TH2F *h_eql_totEdep ;
     TH2F *h_eql_totEdep_CCcont;
@@ -158,7 +165,7 @@ namespace opdet {
     Int_t   fTrueCCNC;
     Float_t fRecoX;
     
-  //********Ion and scint
+    //********Ion and scint
     Float_t fEdep;
     Float_t fTotEdep;
     Float_t fLdepSim; //track length from simulation
@@ -170,7 +177,7 @@ namespace opdet {
     
     float fEQ_only;
     
-  //*********Charge from reco hits
+    //*********Charge from reco hits
     Float_t fTotalCharge; //Integral under the calibrated signal waveform of the hit, in tick x ADC units
     Float_t fTotalChargeCorr;//Total charge corrected for the electron lifetime
     Float_t fADCSum; //The sum of calibrated ADC counts of the hit (0. by default)
@@ -189,19 +196,6 @@ namespace opdet {
     Int_t fNFlashes;
     Int_t fNOpDets;
     std::vector< Float_t > fOpHitPeakTime; //Time of OpHit in us (?)
-    /*std::vector< Int_t >   fFlashIDVector;
-    std::vector< Float_t > fYCenterVector;
-    std::vector< Float_t > fZCenterVector;
-    std::vector< Float_t > fYWidthVector;
-    std::vector< Float_t > fZWidthVector;
-    std::vector< Float_t > fTimeVector;
-    std::vector< Float_t > fRecoXVector;
-    std::vector< Float_t > fTimeWidthVector;
-    std::vector< Float_t > fTimeDiffVector;
-    std::vector< Float_t > fTotalPEVector;
-    std::vector< Float_t > fPurityVector;
-    std::vector< Float_t > fDistanceVector; */
-    //std::vector<Int_t> fNHitOpDetVector;
     
     //*******Ion and Scint  
     std::vector< Float_t > fEnergyDepositionVector;
@@ -237,7 +231,7 @@ namespace opdet {
     std::vector< Float_t > fPEsPerOpDetVector;
     
         
-  //Reco variables
+    //Reco variables
     Int_t fNTrack;
     Float_t fPandoraVtxX,fPandoraVtxY,fPandoraVtxZ;
     std::vector< Float_t > fTrkLengthVector;
@@ -255,14 +249,14 @@ namespace opdet {
     std::vector< Float_t >  fHitToYVector;
     std::vector< Float_t >  fHitToZVector;
     
-  // SpacePoint data
+    // SpacePoint data
     Short_t nspacepoints;
     std::vector<Float_t> fSpacePointX;   // X position of this SpacePoint
     std::vector<Float_t> fSpacePointY;   // Y position of this SpacePoint
     std::vector<Float_t> fSpacePointZ;   // Z position of this SpacePoint
     std::vector<Float_t> fHitSPCharge;   // charge of this SpacePoint
 
-  // For counting waveforms
+    // For counting waveforms
     std::string fOpDetWaveformLabel;
     float fBaseline;
     float fPE;
@@ -286,40 +280,43 @@ namespace opdet {
  {
 
     // Indicate that the Input Module comes from .fcl
-    fEdepLabel             = pset.get<std::string>("EdepLabel","IonAndScint");
-    felecDriftLabel        = pset.get<std::string>("elecDriftLabel","elecDrift");
-    fOpFlashModuleLabel    = pset.get<std::string>("OpFlashModuleLabel");
-    fOpHitModuleLabel      = pset.get<std::string>("OpHitModuleLabel");
-    fHitsLabel             = pset.get<std::string>("HitsLabel");
-    fParticleModuleLabel   = pset.get<std::string>("ParticleModuleLabel");
-    fShowerLabel           = pset.get<std::string>("ShowerLabel");
-    fTrackLabel            = pset.get<std::string>("TrackLabel");
-    fSignalLabel           = pset.get<std::string>("SignalLabel");
-    fGeantLabel            = pset.get<std::string>("GeantLabel");
-    fHitToSpacePointLabel  = pset.get<std::string>("HitToSpacePointLabel");
-    fIsVD                  = pset.get<bool>("IsVD");
-    fBeam                  = pset.get<bool>("Beam");
-    fMakeEDepEQ            = pset.get<bool>("MakeEDepEQ");
-    fMakeEDepEQL           = pset.get<bool>("MakeEDepEQL");
-    fMakeEDepEQLCC         = pset.get<bool>("MakeEDepEQLCC");
-    fNBinsE                = pset.get<int>("NBinsE");
-    fLowE                  = pset.get<float>("LowE");
-    fHighE                 = pset.get<float>("HighE");
-    fNBinsX                = pset.get<int>("NBinsX");
-    fLowX                  = pset.get<float>("LowX");
-    fHighX                 = pset.get<float>("HighX");
-    fDistanceCut           = pset.get<float>("DistanceCut"); 
-    fQuantumEfficiency     = pset.get<float>("QuantumEfficiency");
+    fEdepLabel               = pset.get<std::string>("EdepLabel","IonAndScint");
+    felecDriftLabel          = pset.get<std::string>("elecDriftLabel","elecDrift");
+    fOpFlashModuleLabel      = pset.get<std::string>("OpFlashModuleLabel");
+    fOpHitModuleLabel        = pset.get<std::string>("OpHitModuleLabel");
+    fHitsLabel     	         = pset.get<std::string>("HitsLabel");
+    fParticleModuleLabel     = pset.get<std::string>("ParticleModuleLabel");
+    fShowerLabel             = pset.get<std::string>("ShowerLabel");
+    fTrackLabel              = pset.get<std::string>("TrackLabel");
+    fSignalLabel             = pset.get<std::string>("SignalLabel");
+    fGeantLabel              = pset.get<std::string>("GeantLabel");
+    fHitToSpacePointLabel    = pset.get<std::string>("HitToSpacePointLabel");
+    fIsVD                    = pset.get<bool>("IsVD");
+    fBeam                    = pset.get<bool>("Beam");
+    fMakeEDepEQ              = pset.get<bool>("MakeEDepEQ");
+    fMakeEDepEQL             = pset.get<bool>("MakeEDepEQL");
+    fMakeEDepEQLCC           = pset.get<bool>("MakeEDepEQLCC");
+    fMakeEdepdeltaeql        = pset.get<bool>("MakeEdepdeltaeql");
+    fMakeEdepdeltaeqlCC      = pset.get<bool>("MakeEdepdeltaeqlCC");
+    fMakeEdepdeltaeqlCC_cont = pset.get<bool>("MakeEdepdeltaeqlCC_cont");
+    fNBinsE                  = pset.get<int>("NBinsE");
+    fLowE                    = pset.get<float>("LowE");
+    fHighE                   = pset.get<float>("HighE");
+    fNBinsX                  = pset.get<int>("NBinsX");
+    fLowX                    = pset.get<float>("LowX");
+    fHighX                   = pset.get<float>("HighX");
+    fDistanceCut             = pset.get<float>("DistanceCut"); 
+    fQuantumEfficiency       = pset.get<float>("QuantumEfficiency");
 
-    fOpDetWaveformLabel    = pset.get<std::string>("OpDetWaveformLabel","");
-    fBaseline              = pset.get<float>("Baseline", 1500.);
-    fPE                    = pset.get<float>("PE", 18.);
-    fCalib                 = pset.get<float>("Calib");
-    fWion                  = pset.get<float>("Wion");
-    fWph                   = pset.get<float>("Wph");
-    fCnorm                 = pset.get<float>("Cnorm");
-    frecomb                = pset.get<float>("recomb");
-    fLightMap              = pset.get< std::string >("LightMap");
+    fOpDetWaveformLabel      = pset.get<std::string>("OpDetWaveformLabel","");
+    fBaseline                = pset.get<float>("Baseline", 1500.);
+    fPE                      = pset.get<float>("PE", 18.);
+    fCalib                   = pset.get<float>("Calib");
+    fWion                    = pset.get<float>("Wion");
+    fWph                     = pset.get<float>("Wph");
+    fCnorm                   = pset.get<float>("Cnorm");
+    frecomb                  = pset.get<float>("recomb");
+    fLightMap                = pset.get< std::string >("LightMap");
 
     art::ServiceHandle< art::TFileService > tfs;
     fChargeLightTree = tfs->make<TTree>("ChargeLightTree","ChargeLightTree");
@@ -338,15 +335,15 @@ namespace opdet {
     fChargeLightTree->Branch("Fvis",                    &fFvis,       "Fvis/F");
     fChargeLightTree->Branch("NOpDets",                 &fNOpDets,    "NOpDets/I");
     fChargeLightTree->Branch("OpHitPeakTime",           &fOpHitPeakTime);
-    fChargeLightTree->Branch("OpHitArea",    		        &fOpHitArea ,  "OpHitArea/F");
+    fChargeLightTree->Branch("OpHitArea",    		    &fOpHitArea ,  "OpHitArea/F");
     fChargeLightTree->Branch("TruePxallpart",           &fTruePxallpart);
     fChargeLightTree->Branch("TruePyallpart",           &fTruePyallpart);
     fChargeLightTree->Branch("TruePzallpart",           &fTruePzallpart);
     fChargeLightTree->Branch("TrueEallpart",            &fTrueEallpart);
     fChargeLightTree->Branch("TrueAllPDG",              &fTrueAllPDG);
-    fChargeLightTree->Branch("PointX",     		          &fPointX);
-    fChargeLightTree->Branch("PointY",     		          &fPointY);
-    fChargeLightTree->Branch("PointZ",     		          &fPointZ);
+    fChargeLightTree->Branch("PointX",     		        &fPointX);
+    fChargeLightTree->Branch("PointY",     	         	&fPointY);
+    fChargeLightTree->Branch("PointZ",     		        &fPointZ);
     fChargeLightTree->Branch("GammaScint",     	        &fGammaScint);
     fChargeLightTree->Branch("PEperOpDet",     	        &fPEperOpDet);
     fChargeLightTree->Branch("EnergyDepositionVector",  &fEnergyDepositionVector);
@@ -367,41 +364,20 @@ namespace opdet {
     fChargeLightTree->Branch("NTrack",                  &fNTrack, "NTrack/I");
     fChargeLightTree->Branch("TrkLengthVector",         &fTrkLengthVector);
     fChargeLightTree->Branch("SelTrkLength",            &fSelTrkLength, "SelTrkLength/F");
-    fChargeLightTree->Branch("SelTrkPointX",     	      &fSelTrkPointX);
-    fChargeLightTree->Branch("SelTrkPointY",     	      &fSelTrkPointY);
-    fChargeLightTree->Branch("SelTrkPointZ",     	      &fSelTrkPointZ);        
+    fChargeLightTree->Branch("SelTrkPointX",        	&fSelTrkPointX);
+    fChargeLightTree->Branch("SelTrkPointY",     	    &fSelTrkPointY);
+    fChargeLightTree->Branch("SelTrkPointZ",     	    &fSelTrkPointZ);        
     fChargeLightTree->Branch("PandoraVtxX",             &fPandoraVtxX,"PandoraVtxX/F");
     fChargeLightTree->Branch("PandoraVtxY",             &fPandoraVtxY,"PandoraVtxY/F");
     fChargeLightTree->Branch("PandoraVtxZ",             &fPandoraVtxZ,"PandoraVtxZ/F");
-    fChargeLightTree->Branch("HitToXVector",		        &fHitToXVector);
-    fChargeLightTree->Branch("HitToYVector",		        &fHitToYVector);
-    fChargeLightTree->Branch("HitToZVector",		        &fHitToZVector);
-    fChargeLightTree->Branch("SpacePointX",		          &fSpacePointX);
-    fChargeLightTree->Branch("SpacePointY",		          &fSpacePointY);
-    fChargeLightTree->Branch("SpacePointZ",		          &fSpacePointZ);
+    fChargeLightTree->Branch("HitToXVector",		    &fHitToXVector);
+    fChargeLightTree->Branch("HitToYVector",		    &fHitToYVector);
+    fChargeLightTree->Branch("HitToZVector",		    &fHitToZVector);
+    fChargeLightTree->Branch("SpacePointX",		        &fSpacePointX);
+    fChargeLightTree->Branch("SpacePointY",		        &fSpacePointY);
+    fChargeLightTree->Branch("SpacePointZ",		        &fSpacePointZ);
     fChargeLightTree->Branch("HitSPCharge",             &fHitSPCharge);
-    /*fChargeLightTree->Branch("FlashIDVector",         &fFlashIDVector);
-    fChargeLightTree->Branch("YCenterVector",           &fYCenterVector);
-    fChargeLightTree->Branch("ZCenterVector",           &fZCenterVector);
-    fChargeLightTree->Branch("YWidthVector",            &fYWidthVector);
-    fChargeLightTree->Branch("ZWidthVector",            &fZWidthVector);
-    fChargeLightTree->Branch("TimeVector",              &fTimeVector);
-    fChargeLightTree->Branch("TimeWidthVector",         &fTimeWidthVector);
-    fChargeLightTree->Branch("TimeDiffVector",          &fTimeDiffVector);
-    fChargeLightTree->Branch("TotalPEVector",           &fTotalPEVector); */
-    // fChargeLightTree->Branch("NHitOpDetVector",       &fNHitOpDetVector);
-    //fChargeLightTree->Branch("Purity",                &fPurityVector);
-    //fChargeLightTree->Branch("Distance",              &fDistanceVector);
-    //fChargeLightTree->Branch("RecoXVector",           &fRecoXVector);
-    //fChargeLightTree->Branch("fStepEdepCumVector",    &fStepEdepCumVector);
-    //fChargeLightTree->Branch("StepLengthEdep",        &fStepLength);
-    //fChargeLightTree->Branch("LdepGeom",              &fLdepGeom,"LdepGeom/F");
-    //fChargeLightTree->Branch("FirstHitTime",          &fFirstHitTime,  "FirstHitTime/F");
-    //fChargeLightTree->Branch("LastHitTime",           &fLastHitTime,  "LastHitTime/F");
-    //fChargeLightTree->Branch("HitPeakTimeTicks",      &fHitPeakTimeTicks);
-    //fChargeLightTree->Branch("TrkEnVector",           &fTrkEnVector);
-    //fChargeLightTree->Branch("TrkdEdxVector",         &fTrkdEdxVector);
-    //fChargeLightTree->Branch("SelTrkEn",              &fSelTrkEn, "SelTrkEn/F");
+    
     
     if (!fOpDetWaveformLabel.empty()) {
       fCountTree = tfs->make<TTree>("CountWaveforms","CountWaveforms");
@@ -430,9 +406,15 @@ namespace opdet {
      h_eql_totEdep = tfs->make<TH2F>("Edep vs EQL","Edep vs EQL",1000, 0, 5e3, 1000, 0, 5e3);}
    if (fMakeEDepEQLCC) {
       h_eql_totEdep_CCcont = tfs->make<TH2F>("EdepEQL CC cont","EdepEQL CC cont",100, 0, 5e3, 100, 0, 5e3); }
+   if(fMakeEdepdeltaeql){
+      h_deltaEql= tfs->make<TH1F>("#deltaEQL", "#deltaEQL", 75, -1.5, 1.5);}
+   if(fMakeEdepdeltaeqlCC){
+     h_deltaEqlCC = tfs->make<TH1F>("CC evts", "CC evts", 75, -1.5, 1.5);}
+   if(fMakeEdepdeltaeqlCC_cont){
+     h_deltaEqlCC_cont = tfs->make<TH1F>("CCcontained evts", "CCcontained evts", 75, -1.5, 1.5);}
   
    //Open the light map rootfile 
-   std::cout << "Opening the light map file" << std::endl;
+   std::cout << "Opening the light map file  " << fLightMap << std::endl;
    TFile* fLightMapfile = TFile::Open(fLightMap.c_str());
   
    if (fLightMapfile && !fLightMapfile->IsZombie()) {
@@ -443,7 +425,7 @@ namespace opdet {
      } //open the light map for the VD
     
     else { 
-       h3LightMap = (TH3D*) fLightMapfile->Get("h3VisMap_proj_0_1_2");
+       h3LightMap = (TH3D*) fLightMapfile->Get("h3VisMap_proj_0_1_2;1");
        std::cout<< "Light Map HD found!" << std::endl;
      } //light map for the HD
    }  
@@ -542,8 +524,8 @@ namespace opdet {
    //art::FindManyP< recob::OpHit > Assns(flashlist, evt, fOpFlashModuleLabel);
 
    /////////////////////////
-   // G4 Deposited Energy
-   //////////////////////
+   // G4 Deposited Energy //
+   ////////////////////////
    fTotEdep = 0;
     
    ///// From IonAndScint
@@ -609,7 +591,7 @@ namespace opdet {
 	     fStepLength.emplace_back( energyDepositlist[i]->StepLength()); //in cm
 	     //sum of single steps of edep length
 	     fLdepSim += energyDepositlist[i]->StepLength(); //in cm
-	     fStepLCumVector.emplace_back(fLdepSim); //cumulative of energy in each step
+	     fStepLCumVector.emplace_back(fLdepSim); //acumulative of energy in each step
 	  
 	     dedxsteps += fEdep/fLdepSim; //in MeV/cm
 	   }   
@@ -716,7 +698,6 @@ namespace opdet {
        fTrueEallpart     .emplace_back(particle.E());
        fTrueAllPDG       .emplace_back(particle.PdgCode());
       }
-
       
      // Get the PlaneID which describes the location of the true vertex
      int plane = 0;
@@ -846,96 +827,7 @@ namespace opdet {
    fNOpDets   = geom->NOpDets();
    fNFlashes  = flashlist.size();
    std::cout << "Number of flashes " << fNFlashes << std::endl;
-    
-   /*   for(unsigned int i = 0; i < flashlist.size(); ++i)
-   {
-     // Get OpFlash and associated hits
-     recob::OpFlash TheFlash = *flashlist[i];
-     art::Ptr<recob::OpFlash> FlashP = flashlist[i];
-     std::vector< art::Ptr<recob::OpHit> > hitFromFlash = pbt->OpFlashToOpHits_Ps(FlashP);
-     std::vector< art::Ptr<recob::OpHit> > matchedHits = pbt->OpFlashToOpHits_Ps(FlashP);
-
-     // Calculate the flash purity
-     double purity = pbt->OpHitCollectionPurity(signal_trackids, matchedHits);
-
-     // Calcuate relative detection time
-     //if event is not from neutrino beam add true MC time
-     double flashrealtime= TheFlash.Time() + fTrueT;
-     //       double timeDiff = fDetectedT - TheFlash.Time();
-     double timeDiff = fDetectedT - flashrealtime;
-
-     if (!planeid) {
-        // planeid isn't valid
-       fRecoX = 0;
-     }
-     else {
-       double ticks = clockData.Time2Tick(timeDiff);
-       fRecoX = detProp.ConvertTicksToX(ticks, planeid);
-     }
-
-     // Check if this is a possible flash (w/in 1 drift window)
-       //if (fBeam) { 
-       if (timeDiff < -10 || timeDiff > maxT){
-	     mf::LogError("ChargeAndLightAna") << "Skipping Flash: not w/in 1 drift window (timeDiff < -10 OR timeDiff > maxT)";
-	 continue;
-	 } //} 
-   */
-   //*************************************************************
-    /*      
-     // Put flash info into variables
-     fFlashID     = i;
-     fYCenter     = TheFlash.YCenter();
-     fZCenter     = TheFlash.ZCenter();
-     fYWidth      = TheFlash.YWidth();
-     fZWidth      = TheFlash.ZWidth();
-     fTime        = TheFlash.Time();
-     fTimeWidth   = TheFlash.TimeWidth();
-     fTimeDiff    = timeDiff;
-     fTotalPE     = TheFlash.TotalPE();
-     fPurity      = purity;
-     std::cout<<"Flash: "<<fFlashID<<" PE of this Flash: "<<fTotalPE<<'\n';
-     std::cout<<"Flash time: "<<fTime<<'\n';
-     std::cout<<"True X: "<<fTrueX<<" RecoX from ticks "<<fRecoX<< '\n';
-
-     // Calculate distance from MC truth vertex in the Y-Z plane
-     fDistance = sqrt( pow(fTrueY-fYCenter,2) +  pow(fTrueZ-fZCenter,2) );
-     std::cout<<"Flash distance from MC truth vertex in the Y-Z plane: "<<fDistance<< '\n';
-     std::cout<<"TrueX+flash distance gives: "<< sqrt( pow(fTrueX,2) +  pow(fDistance,2) )<< '\n';
-
-     // Loop through all the opdets with hits in this flash
-     fPEsPerOpDetVector.clear();
-          
-     for(unsigned int iOD = 0; iOD < geom->NOpDets(); ++iOD){
-       fPEsPerOpDetVector.emplace_back(0);
-      }
-      
-      for(unsigned int iC=0; iC < geom->NOpChannels(); ++iC)
-      {
-        unsigned int iOD = geom->OpDetFromOpChannel(iC);
-        fPEsPerOpDetVector[iOD] += TheFlash.PE(iC);
-      }
-
-      fNHitOpDets = 0;
-      for(unsigned int iOD = 0; iOD < geom->NOpDets(); ++iOD){
-        if (fPEsPerOpDetVector[iOD] > 0) ++fNHitOpDets;
-      }
-      fNHitOpDetVector.emplace_back(fNHitOpDets);
-
-      // Add flash info to the tree of all possible flashes
-      fFlashIDVector    .emplace_back(fFlashID);
-      fYCenterVector    .emplace_back(fYCenter);
-      fZCenterVector    .emplace_back(fZCenter);
-      fYWidthVector     .emplace_back(fYWidth);
-      fZWidthVector     .emplace_back(fZWidth);
-      fTimeVector       .emplace_back(fTime);
-      fTimeWidthVector  .emplace_back(fTimeWidth);
-      fTimeDiffVector   .emplace_back(fTimeDiff);
-      fTotalPEVector    .emplace_back(fTotalPE);
-      fPurityVector     .emplace_back(fPurity);
-      fDistanceVector   .emplace_back(fDistance);
-      fRecoXVector      .emplace_back(fRecoX);
-    } */
-    
+   
    ///////////////////////////////////////
    // Reco tracks                       //
    ///////////////////////////////////////    
@@ -965,13 +857,7 @@ namespace opdet {
 	   TVector3 trackvtx = trk->Vertex<TVector3>(); 
 	   std::cout<<" Track Vertex from recob::track : "<<trackvtx(0)<<" "<<trackvtx(1)<<" "<<trackvtx(2)<< " Length: "<<trk->Length()<<std::endl;
 	
-	   /*for(unsigned int i=0; i<trk->Energy().size(); i++){
-	   std::cout << trk->Energy().at(i)<<" "<<trk->dEdx().at(i)<<std::endl;
-	   fTrkEnVector.emplace_back(trk->Energy().at(i));
-	   fTrkdEdxVector.emplace_back(trk->dEdx().at(i));
-	   }*/
-	
-  	   //Select to longest track
+	     //Select to longest track
        if(trk->Length() > maxL){
 	      maxL = trk->Length();
 	      //maxE = trk->Energy().at(2);
@@ -1041,80 +927,36 @@ namespace opdet {
          fHitToZVector.emplace_back(SingleHitToXYZVector[2]); 
          
          //SingleHitToXYZVector.clear();     
-	   }
+	     }
       //} //end if mc
     }//for hitlist
     
     
    /////////////////////////
-   // Space Points	   //
+   // Space Points	      //
    /////////////////////////
    std::cout<<std::endl;
    std::cout<<"****Space points**** "<< std::endl;    
 
-   //----------------------------------Prove---------------------------------------------------------// 
-   /*
-   //Prova1
-   //Get all the spacepoints for the hits of the collection plane
-   for (unsigned int i = 0; i < HitsInColl.size(); ++i){
-     const std::vector<art::Ptr<recob::SpacePoint> > spacePoints(dune_ana::DUNEAnaHitUtils::GetSpacePoints(HitsInColl[i],evt,fHitsLabel,fHitToSpacePointLabel));
-     for (unsigned int iSpacePoint = 0; iSpacePoint < spacePoints.size(); ++iSpacePoint){
-       const art::Ptr<recob::SpacePoint> spacePoint(spacePoints[iSpacePoint]);
-       double thispointx=spacePoint->XYZ()[0];
-       double thispointy=spacePoint->XYZ()[1];
-       double thispointz=spacePoint->XYZ()[2];
-       std::cout<<"The space point is in x,y,z: "<<thispointx<<" "<<thispointy<<" "<<thispointz<<std::endl;
-     }//loop on spacepoints collection
-   }//loop on hits
-  
-   */
-    /*
-   //prova2
-   double sppointx, sppointy, sppointz;
-
-   //const std::vector<art::Ptr<recob::PFParticle>> particles = dune_ana::DUNEAnaEventUtils::GetPFParticles(evt,fParticleModuleLabel);
-
-   for (const art::Ptr<recob::PFParticle> &particle : particles){
-
-   std::vector<art::Ptr<recob::SpacePoint>> spacePoints= dune_ana::DUNEAnaPFParticleUtils::GetSpacePoints(particle,evt,fParticleModuleLabel);
-   std::cout<<"Get Spacepoints from Pandora"<<std::endl;
-   if(spacePoints.size()>0){
-	  std::cout<<"Found "<<spacePoints.size()<<" space points"<<std::endl;
-	  for (unsigned int iSpacePoint = 0; iSpacePoint < spacePoints.size(); ++iSpacePoint){
-	    //spacePoint = spacePoints[iSpacePoint];
-	     const art::Ptr<recob::SpacePoint> spacePoint(spacePoints[iSpacePoint]);
-	    sppointx=spacePoint->XYZ()[0];
-	    sppointy=spacePoint->XYZ()[1];
-	    sppointz=spacePoint->XYZ()[2];
-	    std::cout<<"The space point is in x,y,z: "<<sppointx<<" "<<sppointy<<" "<<sppointz<<std::endl;
-	  }//loop on spacepoints collection
-	}//if spacepoints
-	else{
-	  std::cout<<"space point vector empty"<<std::endl;
-	}
-	
-	}//end pfparticles        
-    */   
-    //----------------------------------Prove---------------------------------------------------------// 
+  //----------------------------------Prove---------------------------------------------------------// 
 
    //prova 3 mt 
-   int spcollp = 0;
-   Float_t SPtotcharge = 0;
-   Float_t spx, spy, spz, spq;
-   Float_t fvis_point = 0;
-   Float_t fvis_tmp = 0;
-   Float_t f_vis_qe ;
-   Float_t L = 0;
-   float Q = 0;
-   float E_QL = 0 ;
-   float EQ_only = 0 ;
+   int spcollp = 0.0;
+   float SPtotcharge = 0.0;
+   float spx, spy, spz, spq;
+   float fvis_point = 0.0;
+   float fvis_tmp = 0.0;
+   float f_vis_qe ;
+   float L = 0.0;
+   float Q = 0.0;
+   float E_QL = 0.0 ;
+   float EQ_only = 0.0 ;
    float DeltaEql = -9999;
    float DeltaEq  = -9999;
    //double binval=0;
    //int ibin = 0;
-   fFvis = 0;
+   fFvis = 0.0;
  
-   
    auto SPHandle = evt.getValidHandle< std::vector<recob::SpacePoint> >(fHitToSpacePointLabel);
    art::FindManyP<recob::Hit> hitsFromSP(SPHandle, evt, fHitToSpacePointLabel);
    std::cout<<"Total number of Space Points in this event: "<< SPHandle->size()<<std::endl;
@@ -1137,84 +979,142 @@ namespace opdet {
 	       fSpacePointZ.emplace_back(spz); 
 	       fHitSPCharge.emplace_back(spq);
 	       SPtotcharge += spq;
-	  
-	       //std::cout << "spx " << spx << ", spy " << spy << ", spz " << spz <<", spq " << spq << std::endl;
-	       //std::cout << "Visibility " << std::endl;
-	       //ibin = h3LightMap->FindBin(spx, spz, spy); 
-           //binval = h3LightMap->GetBinContent(ibin); 
-           //std::cout<<" ---> f is: "<<binval<< std::endl;
-           //fvis_point = binval*spq;
-         
-           
+  	       
 	       fvis_point = GetFvisFromHisto(spx, spy, spz, spq);
-	       //std::cout << "fvis_point = " << fvis_point << " point " << spcollp << std::endl;
 	       fvis_tmp += fvis_point;
-	       //std::cout << "fvis_tmp = " << fvis_tmp << " point " << spcollp << std::endl;
-      	}
+	  }
      }
    }
-   std::cout<<"Found: "<< spcollp <<" spacepoints associated to collection hits"<<std::endl;
-   std::cout << "SP tot charge " << SPtotcharge << std::endl;
-   std::cout<<"****Calculate Fvis from visibility map**** "<< std::endl;
+   
+   //----------------CC Contain --------------------------------------------------
+
+  if (fSpacePointX.size() == 0) {
+  DeltaEql = -9999;
+  DeltaEq = -9999;
+  L = 0;
+  E_QL = 0;
+  std::cout << "-----------------------> No Space Point " << std::endl; 
+  }
+
+  //continue;
+  else {
+
+  int IsNotContainedX = 0;
+  int IsNotContainedY = 0;
+  int IsNotContainedZ = 0;
+  int Nocontenuti = 0;
+  int numeroCC = 0 ;
+  int numeroCC_cont = 0;
+  int IsContained = 1; //0 = NON contenuto, 1 = CONTENUTO
+
+  //faccio una zone fiduciale con gli spacepoints. Controllo se è fuori dal volume fiduciale, conto quanti punti sono fuori e poi escludo l'evento
+  for (auto x : fSpacePointX){
+    if (std::abs(x) > 310) IsNotContainedX++;
+    }
+
+  for (auto y : fSpacePointY){
+    if (std::abs(y) > 550) IsNotContainedY++;
+    }
     
-   if (spcollp > 0 ) {
+      
+  for (auto z : fSpacePointZ) {
+    if (z > 1250 || z < 50) IsNotContainedZ++;
+  }
+
+  if (IsNotContainedX > 1 || IsNotContainedY > 1 || IsNotContainedZ > 1) {
+    IsContained = 0;
+    Nocontenuti++;
+  }
+  
+  std::cout<<"Found: "<< spcollp <<" spacepoints associated to collection hits"<<std::endl;
+  std::cout << "SP tot charge " << SPtotcharge << std::endl;
+  std::cout<<"****Calculate Fvis from visibility map**** "<< std::endl;
+    
+  if (spcollp > 0 ) {
     fFvis = fvis_tmp/SPtotcharge; //F_vis weighted for the total Space Point Charge
     std::cout << "fvis " <<  fFvis << std::endl;
    }     
-   else{ fFvis = 0;
+  else{ fFvis = 0;
        std::cout << "fvis " <<  fFvis << std::endl;
 	   mf::LogWarning("ChargeAndLightAna") << "No Space Point ---> No Fvis calculation. Failing";
 	   //return;
    }  
 
    //-------------------------------------------------------------------------------------------// 
-   //----------------------------------------- Light -------------------------------------------//
+   //                                          Light                                            //
    //-------------------------------------------------------------------------------------------//
    
    // Correct out the prescaling applied during simulation 
    auto const *LarProp = lar::providerFrom<detinfo::LArPropertiesService>(); 
    
-   f_vis_qe = fFvis * fQuantumEfficiency * LarProp->ScintPreScale();
+   f_vis_qe = fFvis * fQuantumEfficiency; //* LarProp->ScintPreScale();
    L = fSumPE/f_vis_qe; 
-
-   std::cout << "L " << L << " f_vis_qe " << f_vis_qe << " fSumPE " << fSumPE << std::endl; 
       
    float TotGammaScint_sps = fTotGammaScint/ LarProp->ScintPreScale();
    std::cout << "TotGammaScint_sps " << TotGammaScint_sps <<  std::endl; 
-   //h_Gamma_L->Fill(TotGammaScint_sps,L); //fGammaScintdE? //Are they necessary?
-   //h_rappLgamma->Fill(L/TotGammaScint_sps);
+   
           
    //-------------------------------------------------------------------------------------------//  
-   //------------------------------------------ Charge -----------------------------------------//
+   //                                          Charge                                           //
    //-------------------------------------------------------------------------------------------//  
    
-   //std::cout << "fTotalChargeCorr " <<  fTotalChargeCorr <<"fCalib" << fCalib <<"fCnorm"<< fCnorm << std::endl;
    Q = fTotalChargeCorr * fCalib * fCnorm; 
-   std::cout << "Q " <<  Q << std::endl;
    EQ_only = (Q  * fWion) / frecomb; 
-   std::cout << "EQ_only " <<  EQ_only << std::endl;
+   
    if (fMakeEDepEQ) {
         h_eq_totEdep->Fill(fTotEdep, EQ_only );
    }
    //-------------------------------------------------------------------------------------------//  
-   //-------------------------------------- Charge+Light ---------------------------------------//
+   //                                        Charge+Light                                       //
    //-------------------------------------------------------------------------------------------//
     
    E_QL = (L + Q) * fWph;
    std::cout << "Q+L " <<  E_QL << std::endl;
    if (fMakeEDepEQL) {
       h_eql_totEdep->Fill(fTotEdep,E_QL );
+      std::cout << "Entries = "
+          << h_eql_totEdep->GetEntries()
+          << std::endl;
+          std::cout << "Edep = " << fTotEdep
+          << "  EQL = " << E_QL << std::endl;
    }
    //-------------------------------DELTA------------------------------------------------------------//
    
    DeltaEql = ( E_QL - fTotEdep)/fTotEdep;
    DeltaEq = ( EQ_only - fTotEdep)/fTotEdep;
-
+  if(fMakeEdepdeltaeql){
+   h_deltaEql->Fill(DeltaEql);}
    std::cout << "Delta Eql = " << DeltaEql << std::endl;
    std::cout << "Delta Eq = " << DeltaEq << std::endl;
-   
-   if (fMakeEDepEQLCC) {
-     h_eql_totEdep_CCcont->Fill(fTotEdep,E_QL ); }
+  if (fTrueCCNC == 0 ) {
+    numeroCC++;
+    if(fMakeEdepdeltaeqlCC){
+    h_deltaEqlCC->Fill(DeltaEql);} 
+    if (IsContained == 1) {
+	numeroCC_cont++;
+        if (fMakeEDepEQLCC) {
+        h_eql_totEdep_CCcont->Fill(fTotEdep,E_QL ); }
+        if(fMakeEdepdeltaeqlCC_cont){
+        h_deltaEqlCC_cont->Fill(DeltaEql);}
+      }
+   } 
+}  
+//delete after debugging is complete
+TF1 *fitgaus = new TF1 ("fitgaus","gaus",-0.5,0.5); 
+fitgaus->SetLineColor(kBlack);
+
+TF1 *fitgausCC = new TF1 ("fitgausCC","gaus",-0.5,0.5);
+fitgausCC->SetLineColor(kBlue);
+
+TF1 *fitgausCC_cont = new TF1 ("fitgausCC_cont","gaus",-0.4,0.4);
+fitgausCC_cont->SetLineColor(kRed);
+
+if(fMakeEdepdeltaeql){
+h_deltaEql->Fit("fitgaus","R");}
+if(fMakeEdepdeltaeqlCC){
+h_deltaEqlCC->Fit("fitgausCC","R");}
+if(fMakeEdepdeltaeqlCC_cont){
+h_deltaEqlCC_cont->Fit("fitgausCC_cont","R");}
 
    //////////////////////////////////////////////
    // Write out the ChargeLightTree and clean up //
@@ -1234,37 +1134,22 @@ namespace opdet {
    fPointY                     .clear();
    fPointZ                     .clear();
    fGammaScint                 .clear();
-   fStepLength		              .clear();
-   fStepLCumVector		          .clear();
+   fStepLength		           .clear();
+   fStepLCumVector	           .clear();
    fStepEdepCumVector          .clear();
-   fOpHitPeakTime  		        .clear();
-   fTrkLengthVector   	        .clear();
-   fSelTrkPointX		            .clear();
-   fSelTrkPointY		            .clear();
-   fSelTrkPointZ		            .clear();
-   fHitToXVector		            .clear();
-   fHitToYVector		            .clear(); 
-   fHitToZVector		            .clear();
+   fOpHitPeakTime  	           .clear();
+   fTrkLengthVector   	       .clear();
+   fSelTrkPointX	           .clear();
+   fSelTrkPointY	           .clear();
+   fSelTrkPointZ	           .clear();
+   fHitToXVector	           .clear();
+   fHitToYVector	           .clear(); 
+   fHitToZVector	           .clear();
    fSpacePointX                .clear(); 
    fSpacePointY                .clear(); 
    fSpacePointZ                .clear(); 
    fHitSPCharge                .clear();  
-   //fTrkEnVector              .clear();
-   //fTrkdEdxVector            .clear();
-   /*fFlashIDVector            .clear();
-   fYCenterVector              .clear();
-   fZCenterVector              .clear();
-   fYWidthVector               .clear();
-   fZWidthVector               .clear();
-   fTimeVector                 .clear();
-   fTimeWidthVector            .clear();
-   fTimeDiffVector             .clear();
-   fTotalPEVector              .clear();
-   fNHitOpDetVector            .clear();
-   fPurityVector               .clear();
-   fDistanceVector             .clear();
-   fRecoXVector                .clear();
-   */  
+   
   }
 
  //-----------------------------------------------------------------------
@@ -1284,10 +1169,10 @@ namespace opdet {
    //std::cout << "ibin" << ibin << std::endl;
     
    if (fIsVD) {
-      ibin = h3LightMap->FindBin(y, z, x);  
+      ibin = h3LightMap->FindBin(x, y, z);  
     }
     else {
-      ibin = h3LightMap->FindBin(x, z, y);
+      ibin = h3LightMap->FindBin(x, y, z);
     }
     
     binval = h3LightMap->GetBinContent(ibin); 
@@ -1296,9 +1181,7 @@ namespace opdet {
     //std::cout<<"vis = "<<vis<<std::endl;
     return vis;
   }
- 
- 
-
+  
 } // namespace opdet
 
 namespace opdet {
