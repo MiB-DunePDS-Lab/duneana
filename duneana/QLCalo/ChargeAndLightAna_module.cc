@@ -1,6 +1,18 @@
-// -*- mode: c++; c-basic-offset: 2; -*-
-// This analyzer writes out a TTree for evaluating deposited energy using both Charge and Light
-// M.Torti 
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Class:       QLCalo
+// Module Type: analyzer
+// File:        QLCalo_module.cc
+// Authors:     G. Brunetti, M. Delgado, D. Guffanti, M. Torti - University of Milano Bicocca - (marta.torti@mib.infn.it), 2026
+//
+// Analyser module to estimate the deposited energy using both charge and light information.
+//
+// Usage:
+//   lar -c ChargeAndLightAna.fcl -s /path/to/reco/files/*.root
+//
+// Description of intended use:
+//   This analyzer writes out a TTree for evaluating deposited energy using both Charge and Light information,
+//   following the method in PHYS. REV. D 101, 012010 (2020).
+////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef ChargeAndLightAna_H
 #define ChargeAndLightAna_H 1
@@ -95,13 +107,10 @@ namespace opdet {
 
     void endJob();
     
-    float GetFvisFromHisto(float x, float y, float z, float q);
+    float GetFvisFromHisto(float x, float y, float z);
 
   private:
-
-    // The stuff below is the part you'll most likely have to change to
-    // go from this custom example to your own task.
-
+    
     // The parameters we'll read from the .fcl file.
     std::string fEdepLabel;             // Input tag for Energy deposit collection
     std::string felecDriftLabel;        // Input tag for electron Drift collection
@@ -115,9 +124,10 @@ namespace opdet {
     std::string fShowerLabel;           // Input tag for reco Showers
     std::string fHitToSpacePointLabel;  // Input tag for SpacePoints
     std::string fLightMap;              // Visibility map file
-    bool	fBeam;                        // Simulated events are beam neutrinos
-    bool  fIsVD;                        // Is it a FD2-VD sample?
+    bool fBeam;                        // Simulated events are beam neutrinos
+    bool fIsVD;                        // Is it a FD2-VD sample?
     bool fMakeEDepEQ;
+    bool fMakeEDepEL;
     bool fMakeEDepEQL;
     bool fMakeEDepEQLCC;
     bool fMakeEdepdeltaeql;
@@ -132,9 +142,12 @@ namespace opdet {
 
     TH1I *hAdjHits;
     TH1F *h_deltaEql;
+    TH1F *h_deltaEq;
+    TH1F *h_deltaEl;
     TH1F *h_deltaEqlCC;
     TH1F *h_deltaEqlCC_cont;
     TH2F *h_eq_totEdep ;
+    TH2F *h_el_totEdep ;
     TH2F *h_eql_totEdep ;
     TH2F *h_eql_totEdep_CCcont;
            
@@ -145,12 +158,12 @@ namespace opdet {
     int   fNBinsX;
     float fLowX;
     float fHighX;
-    float fDistanceCut;
     float fQuantumEfficiency;
-    float fCalib;
+    float fCalq;
+    float fCalpe;
+    float fBeta;
     float fWion;
     float fWph;
-    float fCnorm;
     float frecomb;
 
     Int_t fEventID;
@@ -175,7 +188,13 @@ namespace opdet {
     Float_t fEiondE; //number of ionizing electrons divided by deposited energy
     Float_t fGammaScintdE; //number of scintillation gammas divided by deposited energy
     
+    Float_t fL;
+    Float_t fQ;
+    Float_t fEQ;
+    Float_t fEQL;
     float fEQ_only;
+    float fEL_only;
+    Int_t fIsContained;  //Flag for contained events  (0=false, 1=true) 
     
     //*********Charge from reco hits
     Float_t fTotalCharge; //Integral under the calibrated signal waveform of the hit, in tick x ADC units
@@ -184,9 +203,7 @@ namespace opdet {
     Float_t fPeakAmplitude; //The estimated amplitude of the hit at its peak, in ADC units
     Float_t fMeanHitTime; //Last Time recorded among hits, Time of the signal peak, in us
     Float_t fHitDist; //First hit time * 1.6 mm/us --> theor distance travelled by charge (cm)
-    // Float_t fFirstHitTime; //First Time recorded among hits, Time of the signal peak,in us
-    //Float_t fLastHitTime; //Last Time recorded among hits, Time of the signal peak, in us
-    
+        
     std::vector< Float_t > fTruePxallpart;
     std::vector< Float_t > fTruePyallpart;
     std::vector< Float_t > fTruePzallpart;
@@ -211,8 +228,7 @@ namespace opdet {
     std::vector< Float_t > fHitCharge;
     std::vector< Int_t > fHitMultiplicity; //How many hits could this one be shared with. Index of this hit among the Multiplicity() hits in the signal window
     std::vector< Float_t > fHitPeakTime; //Time of the signal peak, converted in us
-    //std::vector< Float_t > fHitPeakTimeTicks; //Time of the signal peak, in tick units.
-    
+       
     Int_t    fFlashID;
     Float_t  fYCenter;
     Float_t  fZCenter;
@@ -235,10 +251,7 @@ namespace opdet {
     Int_t fNTrack;
     Float_t fPandoraVtxX,fPandoraVtxY,fPandoraVtxZ;
     std::vector< Float_t > fTrkLengthVector;
-    //std::vector< Float_t > fTrkEnVector;
-    //std::vector< Float_t > fTrkdEdxVector;
-    
-    
+        
     //Float_t fSelTrkEn;
     Float_t fSelTrkLength;
     std::vector< Float_t > fSelTrkPointX;
@@ -294,6 +307,7 @@ namespace opdet {
     fIsVD                    = pset.get<bool>("IsVD");
     fBeam                    = pset.get<bool>("Beam");
     fMakeEDepEQ              = pset.get<bool>("MakeEDepEQ");
+    fMakeEDepEL              = pset.get<bool>("MakeEDepEL");
     fMakeEDepEQL             = pset.get<bool>("MakeEDepEQL");
     fMakeEDepEQLCC           = pset.get<bool>("MakeEDepEQLCC");
     fMakeEdepdeltaeql        = pset.get<bool>("MakeEdepdeltaeql");
@@ -305,19 +319,31 @@ namespace opdet {
     fNBinsX                  = pset.get<int>("NBinsX");
     fLowX                    = pset.get<float>("LowX");
     fHighX                   = pset.get<float>("HighX");
-    fDistanceCut             = pset.get<float>("DistanceCut"); 
     fQuantumEfficiency       = pset.get<float>("QuantumEfficiency");
 
     fOpDetWaveformLabel      = pset.get<std::string>("OpDetWaveformLabel","");
     fBaseline                = pset.get<float>("Baseline", 1500.);
     fPE                      = pset.get<float>("PE", 18.);
-    fCalib                   = pset.get<float>("Calib");
+    fCalq                    = pset.get<float>("Calq");
+    fCalpe                   = pset.get<float>("Calpe");
+    fBeta                    = pset.get<float>("Beta");
     fWion                    = pset.get<float>("Wion");
     fWph                     = pset.get<float>("Wph");
-    fCnorm                   = pset.get<float>("Cnorm");
     frecomb                  = pset.get<float>("recomb");
     fLightMap                = pset.get< std::string >("LightMap");
 
+ 
+ }
+
+ //-----------------------------------------------------------------------
+ // Destructor
+ ChargeAndLightAna::~ChargeAndLightAna()
+ {}
+
+ //-----------------------------------------------------------------------
+ void ChargeAndLightAna::beginJob()
+ {
+   
     art::ServiceHandle< art::TFileService > tfs;
     fChargeLightTree = tfs->make<TTree>("ChargeLightTree","ChargeLightTree");
     
@@ -342,7 +368,7 @@ namespace opdet {
     fChargeLightTree->Branch("TrueEallpart",            &fTrueEallpart);
     fChargeLightTree->Branch("TrueAllPDG",              &fTrueAllPDG);
     fChargeLightTree->Branch("PointX",     		        &fPointX);
-    fChargeLightTree->Branch("PointY",     	         	&fPointY);
+    fChargeLightTree->Branch("PointY",     	           	&fPointY);
     fChargeLightTree->Branch("PointZ",     		        &fPointZ);
     fChargeLightTree->Branch("GammaScint",     	        &fGammaScint);
     fChargeLightTree->Branch("PEperOpDet",     	        &fPEperOpDet);
@@ -364,7 +390,7 @@ namespace opdet {
     fChargeLightTree->Branch("NTrack",                  &fNTrack, "NTrack/I");
     fChargeLightTree->Branch("TrkLengthVector",         &fTrkLengthVector);
     fChargeLightTree->Branch("SelTrkLength",            &fSelTrkLength, "SelTrkLength/F");
-    fChargeLightTree->Branch("SelTrkPointX",        	&fSelTrkPointX);
+    fChargeLightTree->Branch("SelTrkPointX",          	&fSelTrkPointX);
     fChargeLightTree->Branch("SelTrkPointY",     	    &fSelTrkPointY);
     fChargeLightTree->Branch("SelTrkPointZ",     	    &fSelTrkPointZ);        
     fChargeLightTree->Branch("PandoraVtxX",             &fPandoraVtxX,"PandoraVtxX/F");
@@ -377,37 +403,33 @@ namespace opdet {
     fChargeLightTree->Branch("SpacePointY",		        &fSpacePointY);
     fChargeLightTree->Branch("SpacePointZ",		        &fSpacePointZ);
     fChargeLightTree->Branch("HitSPCharge",             &fHitSPCharge);
-    
+    fChargeLightTree->Branch("L",                       &fL);
+    fChargeLightTree->Branch("Q",                       &fQ);
+    fChargeLightTree->Branch("EQL",                     &fEQL);
+    fChargeLightTree->Branch("EQ",                      &fEQ);
+    fChargeLightTree->Branch("IsContained",             &fIsContained,"IsContained/I"); 
     
     if (!fOpDetWaveformLabel.empty()) {
-      fCountTree = tfs->make<TTree>("CountWaveforms","CountWaveforms");
+       //fCountTree = tfs->make<TTree>("CountWaveforms","CountWaveforms");
       fCountTree->Branch("EventID",       &fEventID,       "EventID/I");
       fCountTree->Branch("nwaveforms1pe", &fnwaveforms1pe, "nwaveforms1pe/I");
       fCountTree->Branch("nwaveforms2pe", &fnwaveforms2pe, "nwaveforms2pe/I");
       fCountTree->Branch("nwaveforms3pe", &fnwaveforms3pe, "nwaveforms3pe/I");
     }
- 
- }
-
- //-----------------------------------------------------------------------
- // Destructor
- ChargeAndLightAna::~ChargeAndLightAna()
- {}
-
-  //-----------------------------------------------------------------------
-  void ChargeAndLightAna::beginJob()
-  {
-   //Histograms
-   art::ServiceHandle<art::TFileService> tfs;
-   
+    //Histograms
+         
    if (fMakeEDepEQ) {
       h_eq_totEdep = tfs->make<TH2F>("Edep vs EQ","Edep vs EQ",1000, 0, 50e3, 1000, 0, 50e3);}
+   if (fMakeEDepEL) {
+      h_el_totEdep = tfs->make<TH2F>("Edep vs EL","Edep vs EL",1000, 0, 50e3, 1000, 0, 50e3);}
    if (fMakeEDepEQL) {
      h_eql_totEdep = tfs->make<TH2F>("Edep vs EQL","Edep vs EQL",1000, 0, 5e3, 1000, 0, 5e3);}
    if (fMakeEDepEQLCC) {
       h_eql_totEdep_CCcont = tfs->make<TH2F>("EdepEQL CC cont","EdepEQL CC cont",100, 0, 5e3, 100, 0, 5e3); }
    if(fMakeEdepdeltaeql){
-      h_deltaEql= tfs->make<TH1F>("#deltaEQL", "#deltaEQL", 75, -1.5, 1.5);}
+      h_deltaEql= tfs->make<TH1F>("#deltaEQL", "#deltaEQL", 75, -1.5, 1.5);
+      h_deltaEq= tfs->make<TH1F>("#deltaEQ", "#deltaEQ", 75, -1.5, 1.5);
+       h_deltaEl= tfs->make<TH1F>("#deltaEL", "#deltaEL", 75, -1.5, 1.5);}   
    if(fMakeEdepdeltaeqlCC){
      h_deltaEqlCC = tfs->make<TH1F>("CC evts", "CC evts", 75, -1.5, 1.5);}
    if(fMakeEdepdeltaeqlCC_cont){
@@ -430,9 +452,9 @@ namespace opdet {
      } //light map for the HD
    }  
   }
-  //-----------------------------------------------------------------------
-  void ChargeAndLightAna::analyze(const art::Event& evt)
-  {
+ //-----------------------------------------------------------------------
+ void ChargeAndLightAna::analyze(const art::Event& evt)
+ {
    // Get the required services
    art::ServiceHandle<geo::Geometry> geom;
    auto const& wireReadout = art::ServiceHandle<geo::WireReadout>()->Get();
@@ -440,9 +462,6 @@ namespace opdet {
    art::ServiceHandle<cheat::BackTrackerService> bt_serv;
    art::ServiceHandle< cheat::ParticleInventoryService > pinv;
    art::ServiceHandle< art::TFileService > tfs;
-   //bool isMC = !evt.isRealData();
-   //pbt->Rebuild(evt);
-   // Record the event ID
    fEventID = evt.id().event();
    std::cout << "=============== EVENT ID " << fEventID << " ================" << std::endl;
 
@@ -563,6 +582,9 @@ namespace opdet {
 
 
      for(int i = 0; i < nSimEnergyDeposits; i++){
+        
+      
+       if (!energyDepositlist[i]) continue;
        
        //points of the simulated track
        fPointX.emplace_back(energyDepositlist[i]->StartX());
@@ -570,14 +592,14 @@ namespace opdet {
        fPointZ.emplace_back(energyDepositlist[i]->StartZ());
        fGammaScint.emplace_back(energyDepositlist[i]->NumPhotons());
        fEdep = energyDepositlist[i]->E(); 
-	     fEnergyDepositionVector.emplace_back(fEdep);
-	     fTotEdep += fEdep;
+       fEnergyDepositionVector.emplace_back(fEdep);
+       fTotEdep += fEdep;
        fStepEdepCumVector.emplace_back(fTotEdep);
 	     fTotGammaScint += energyDepositlist[i]->NumPhotons();
 	     fTotEion += energyDepositlist[i]->NumElectrons();
 	     //find starting point, scan along z
 	     thisposition = energyDepositlist[i]->StartZ();
-	     if(thisposition < edepstartz ){
+       if(thisposition < edepstartz ){
 	       edepstartz=thisposition;
 	       istart=i;
 	     }
@@ -594,9 +616,13 @@ namespace opdet {
 	     fStepLCumVector.emplace_back(fLdepSim); //acumulative of energy in each step
 	  
 	     dedxsteps += fEdep/fLdepSim; //in MeV/cm
+       
 	   }   
-	
-	   std::cout<<"Number of deposits: "<<nSimEnergyDeposits<<" Single step L(cm): "<<energyDepositlist[2]->StepLength()<<" Total number of emittend photons: "<<fTotGammaScint<<" and ionization electrons: "<<fTotEion<<" ---> Check w.r.t path length: "<<std::endl;
+	   double meanStepL = (nSimEnergyDeposits > 0)
+                   ? fLdepSim / nSimEnergyDeposits
+                   : 0.0;
+     std::cout << "Number of deposits: " << nSimEnergyDeposits << " Mean StepL (cm): " << meanStepL<< " Total photons: " << fTotGammaScint << " Ion electrons: " << fTotEion << " Total L(cm): " << fLdepSim  << std::endl;    
+	   //std::cout<<"Number of deposits: "<<nSimEnergyDeposits<<" Single step L(cm): "<<energyDepositlist[2]->StepLength()<<" Total number of emittend photons: "<<fTotGammaScint<<" and ionization electrons: "<<fTotEion<<" ---> Check w.r.t path length: "<<std::endl;
 
 	   edepstartx=energyDepositlist[istart]->StartX();
 	   edepstarty=energyDepositlist[istart]->StartY();
@@ -622,8 +648,7 @@ namespace opdet {
    }
 
    std::cout<<"TotEdep is: "<<fTotEdep<<" (MeV) ";
-              
-     
+         
    //////////////////////////////////////
    // Access all the truth information //
    //////////////////////////////////////
@@ -743,65 +768,41 @@ namespace opdet {
      mf::LogError("ChargeAndLightAna") << "Event doesn't have signal ";
    }
 
-   // Get the maximum possible time difference by getting number of ticks corresponding to
-   // one full drift distance, and converting to time.
-   //double maxT=0;
-   //if(fBeam) maxT = clockData.TPCTick2Time(detProp.NumberTimeSamples());
-
-
    //////////////////////////////////////
    // CHARGE collected                 //
    ////////////////////////////////////// 
-   //    unsigned short wirePlane = geo::kZ;
-
+   
    // Total charge collected in the event and time info of the hits
    fTotalCharge = 0.0;
    fTotalChargeCorr = 0.0;
    fADCSum = 0.0;
    fPeakAmplitude = 0.0;
-   //fFirstHitTime = -1000;
    fHitDist = -1000;
    fMeanHitTime = -1000;
-   //double firstHit=100000;
    double meanHit=0;
-   //double lastHit=-100000;
    int collpl=0;
    auto hitListHandle = evt.getValidHandle<std::vector<recob::Hit>>(fHitsLabel);
 
    for(size_t iHit = 0; iHit < hitListHandle->size(); ++iHit){
-     //thishit=static_cast<int>(iHit);  
      art::Ptr<recob::Hit> hitPtr(hitListHandle, iHit);
 	   if(wireReadout.SignalType(hitPtr->Channel()) == geo::kCollection){
-       // if(hitPtr->View() == wirePlane){
-	     collpl++;
+       collpl++;
 	     fHitCharge.emplace_back(hitPtr->Integral());
 	     fTotalCharge += hitPtr->Integral();        
 	     fADCSum += hitPtr->ROISummedADC();
 	     fPeakAmplitude += hitPtr->PeakAmplitude();
 	     fHitMultiplicity.emplace_back(hitPtr->Multiplicity());
-	     //fHitPeakTimeTicks.emplace_back(hitPtr->PeakTime());
 	     //convert hit time from ticks to us
 	     double hitT = clockData.TPCTick2Time(hitPtr->PeakTime());
 	     fHitPeakTime.emplace_back(hitT);
-	     meanHit += hitT;
-	     //	if(thishit==0) firstHit=hitT;
-	     /*	if(static_cast<int>(iHit) == 0){
-	     firstHit=hitT;
-	     lastHit=hitT;
-	     }*/
-	    //if(hitT<firstHit) firstHit=hitT;
-	    //if(hitT>lastHit) lastHit=hitT;
-     } //hit in collection                 
+	     meanHit += hitT;	     
+      } //hit in collection                 
     } //hit
   
    if(collpl==0){
     std::cout<<"********** no hits in the Collection Plane... ***********"<<'\n';
-    //  fFirstHitTime = -1000;
-    //fLastHitTime = -1000;
     fMeanHitTime = -1000;
    }else{
-     // fFirstHitTime = firstHit;
-     //fLastHitTime = lastHit;
      fMeanHitTime = meanHit/collpl;
      fHitDist = (fMeanHitTime * 1.6)/10.; //cm
      //std::cout << "First Hit in time is " << firstHit <<" (us), Last Hit in time is " << lastHit <<" (us)" << '\n';
@@ -810,14 +811,12 @@ namespace opdet {
         
    // Output the total charge
    std::cout << "Total Charge from Reco Hits: " << fTotalCharge << '\n';    
-    
-    
+       
    //compute the correction to the collected charge using DUNEAnaHitUtils
    std::vector<art::Ptr<recob::Hit>> HitsInColl = dune_ana::DUNEAnaHitUtils::GetHitsOnPlane(dune_ana::DUNEAnaEventUtils::GetHits(evt, fHitsLabel),2); //Collection plane has Plane_ID = 2
    fTotalChargeCorr = dune_ana::DUNEAnaHitUtils::LifetimeCorrectedTotalHitCharge(clockData, detProp, HitsInColl);
    std::cout << "Total Charge from reco hits corrected with electron lifetime: " << fTotalChargeCorr << '\n';    
          
-               
    /////////////////////////
    // Analyze the flashes //
    /////////////////////////
@@ -838,9 +837,7 @@ namespace opdet {
    int nPart = 0;
    fNTrack = 0;
    double maxL = 0;
-   //double maxE = 0;
    int selTrack = 0;
-   //fSelTrkEn = 0;
    fSelTrkLength = 0;   
 
    for (const art::Ptr<recob::PFParticle> &particle : particles){
@@ -879,8 +876,7 @@ namespace opdet {
       if (l == selTrack) {
         const art::Ptr<recob::Track> seltrk = dune_ana::DUNEAnaPFParticleUtils::GetTrack(part,evt,fParticleModuleLabel,fTrackLabel);
         
-        //fSelTrkEn=seltrk->Energy().at(2);	
-	    fSelTrkLength=seltrk->Length(); 
+      fSelTrkLength=seltrk->Length(); 
 	  
 	    //save track points
 	    npoint_trk=seltrk->CountValidPoints();
@@ -913,7 +909,6 @@ namespace opdet {
    for(size_t iH = 0; iH < hitListHandle->size(); ++iH){
       art::Ptr<recob::Hit> hitPtr(hitListHandle, iH);
       //std::cout << "Backtracker per hit " << iH << std::endl;
-      // if (isMC) {
       std::vector<const sim::IDE*> ides;
       try{          
           ides = bt_serv -> HitToSimIDEs_Ps(clockData, hitPtr);
@@ -928,33 +923,28 @@ namespace opdet {
          
          //SingleHitToXYZVector.clear();     
 	     }
-      //} //end if mc
     }//for hitlist
     
-    
-   /////////////////////////
+    /////////////////////////
    // Space Points	      //
    /////////////////////////
    std::cout<<std::endl;
    std::cout<<"****Space points**** "<< std::endl;    
 
-  //----------------------------------Prove---------------------------------------------------------// 
-
-   //prova 3 mt 
    int spcollp = 0.0;
    float SPtotcharge = 0.0;
    float spx, spy, spz, spq;
    float fvis_point = 0.0;
    float fvis_tmp = 0.0;
-   float f_vis_qe ;
+   float f_vis_qe = 0.0 ;
    float L = 0.0;
    float Q = 0.0;
    float E_QL = 0.0 ;
    float EQ_only = 0.0 ;
+   float EL_only = 0.0 ;
    float DeltaEql = -9999;
    float DeltaEq  = -9999;
-   //double binval=0;
-   //int ibin = 0;
+   float DeltaEl  = -9999;
    fFvis = 0.0;
  
    auto SPHandle = evt.getValidHandle< std::vector<recob::SpacePoint> >(fHitToSpacePointLabel);
@@ -973,17 +963,22 @@ namespace opdet {
 	       spy = hitSP->XYZ()[1];
 	       spz = hitSP->XYZ()[2];
 	       spq = h->Integral();
+
+         if(spq<=0) continue;
 	  
 	       fSpacePointX.emplace_back(spx);
 	       fSpacePointY.emplace_back(spy);
 	       fSpacePointZ.emplace_back(spz); 
 	       fHitSPCharge.emplace_back(spq);
-	       SPtotcharge += spq;
+	       
   	       
-	       fvis_point = GetFvisFromHisto(spx, spy, spz, spq);
-	       fvis_tmp += fvis_point;
-	  }
+	       fvis_point = GetFvisFromHisto(spx, spy, spz);
+	       fvis_tmp += spq * fvis_point;
+         SPtotcharge += spq;
+
+        }
      }
+  
    }
    
    //----------------CC Contain --------------------------------------------------
@@ -991,6 +986,7 @@ namespace opdet {
   if (fSpacePointX.size() == 0) {
   DeltaEql = -9999;
   DeltaEq = -9999;
+  DeltaEl = -9999;
   L = 0;
   E_QL = 0;
   std::cout << "-----------------------> No Space Point " << std::endl; 
@@ -999,76 +995,79 @@ namespace opdet {
   //continue;
   else {
 
-  int IsNotContainedX = 0;
-  int IsNotContainedY = 0;
-  int IsNotContainedZ = 0;
-  int Nocontenuti = 0;
-  int numeroCC = 0 ;
-  int numeroCC_cont = 0;
-  int IsContained = 1; //0 = NON contenuto, 1 = CONTENUTO
+   int IsNotContainedX = 0;
+   int IsNotContainedY = 0;
+   int IsNotContainedZ = 0;
+   int Nocontenuti = 0;
+   int numeroCC = 0 ;
+   int numeroCC_cont = 0;
+   int IsContained = 1; //0 = NON contenuto, 1 = CONTENUTO
 
-  //faccio una zone fiduciale con gli spacepoints. Controllo se è fuori dal volume fiduciale, conto quanti punti sono fuori e poi escludo l'evento
-  for (auto x : fSpacePointX){
+   //faccio una zone fiduciale con gli spacepoints. Controllo se è fuori dal volume fiduciale, conto quanti punti sono fuori e poi escludo l'evento
+   for (auto x : fSpacePointX){
     if (std::abs(x) > 310) IsNotContainedX++;
-    }
+     }
 
-  for (auto y : fSpacePointY){
+   for (auto y : fSpacePointY){
     if (std::abs(y) > 550) IsNotContainedY++;
     }
     
       
-  for (auto z : fSpacePointZ) {
-    if (z > 1250 || z < 50) IsNotContainedZ++;
-  }
+   for (auto z : fSpacePointZ) {
+    if (z > 1200 || z < 50) IsNotContainedZ++;
+   }
+  
 
-  if (IsNotContainedX > 1 || IsNotContainedY > 1 || IsNotContainedZ > 1) {
+   if (IsNotContainedX > 1 || IsNotContainedY > 1 || IsNotContainedZ > 1) {
     IsContained = 0;
     Nocontenuti++;
-  }
-  
-  std::cout<<"Found: "<< spcollp <<" spacepoints associated to collection hits"<<std::endl;
-  std::cout << "SP tot charge " << SPtotcharge << std::endl;
-  std::cout<<"****Calculate Fvis from visibility map**** "<< std::endl;
+   }
+   fIsContained = IsContained; 
+
+   std::cout<<"Found: "<< spcollp <<" spacepoints associated to collection hits"<<std::endl;
+   std::cout << "SP tot charge " << SPtotcharge << std::endl;
+   std::cout<<"****Calculate Fvis from visibility map**** "<< std::endl;
     
-  if (spcollp > 0 ) {
+   if (spcollp > 0 && SPtotcharge > 0)  {
     fFvis = fvis_tmp/SPtotcharge; //F_vis weighted for the total Space Point Charge
     std::cout << "fvis " <<  fFvis << std::endl;
-   }     
+  }     
   else{ fFvis = 0;
-       std::cout << "fvis " <<  fFvis << std::endl;
+     std::cout << "fvis " <<  fFvis << std::endl;
 	   mf::LogWarning("ChargeAndLightAna") << "No Space Point ---> No Fvis calculation. Failing";
 	   //return;
    }  
 
-   //-------------------------------------------------------------------------------------------// 
-   //                                          Light                                            //
-   //-------------------------------------------------------------------------------------------//
+   // ===================== LIGHT =====================
    
    // Correct out the prescaling applied during simulation 
    auto const *LarProp = lar::providerFrom<detinfo::LArPropertiesService>(); 
    
    f_vis_qe = fFvis * fQuantumEfficiency; //* LarProp->ScintPreScale();
-   L = fSumPE/f_vis_qe; 
+   L = (fSumPE/f_vis_qe)*fCalpe;//*0.76; //0.717best 0.673 cl*0.78=1pero no el residual; 
+   fL = L; 
+   EL_only = (L*fWph)/(1-(fBeta*frecomb));  //0.682
       
    float TotGammaScint_sps = fTotGammaScint/ LarProp->ScintPreScale();
    std::cout << "TotGammaScint_sps " << TotGammaScint_sps <<  std::endl; 
+   if (fMakeEDepEL) {
+        h_el_totEdep->Fill(fTotEdep, EL_only );
+   }
    
-          
-   //-------------------------------------------------------------------------------------------//  
-   //                                          Charge                                           //
-   //-------------------------------------------------------------------------------------------//  
+   // ===================== CHARGE =====================
    
-   Q = fTotalChargeCorr * fCalib * fCnorm; 
-   EQ_only = (Q  * fWion) / frecomb; 
+   Q = fTotalChargeCorr * fCalq ; 
+   fQ = Q; 
+   EQ_only = (Q*fWion)/(fBeta*frecomb);  //test#4 ideal definir q sin dependencia de REcomb
+   std::cout << "Q " << Q << "EQ_only " << EQ_only << "L " << L << "EL_only "<< EL_only << "CALI "<< fCalq << "-" << fSumPE   << std::endl; 
    
    if (fMakeEDepEQ) {
         h_eq_totEdep->Fill(fTotEdep, EQ_only );
    }
-   //-------------------------------------------------------------------------------------------//  
-   //                                        Charge+Light                                       //
-   //-------------------------------------------------------------------------------------------//
-    
-   E_QL = (L + Q) * fWph;
+   
+   // ===================== CHARGE + LIGHT ==============
+   
+   E_QL = (L + Q)*fWph;  //1.07
    std::cout << "Q+L " <<  E_QL << std::endl;
    if (fMakeEDepEQL) {
       h_eql_totEdep->Fill(fTotEdep,E_QL );
@@ -1078,91 +1077,97 @@ namespace opdet {
           std::cout << "Edep = " << fTotEdep
           << "  EQL = " << E_QL << std::endl;
    }
-   //-------------------------------DELTA------------------------------------------------------------//
    
-   DeltaEql = ( E_QL - fTotEdep)/fTotEdep;
-   DeltaEq = ( EQ_only - fTotEdep)/fTotEdep;
-  if(fMakeEdepdeltaeql){
-   h_deltaEql->Fill(DeltaEql);}
+   // ===================== Delta =======================
+   
+   DeltaEql = ( E_QL-fTotEdep)/fTotEdep;
+   DeltaEq = ( EQ_only-fTotEdep)/fTotEdep;
+   DeltaEl = ( EL_only-fTotEdep)/fTotEdep;
+   if(fMakeEdepdeltaeql){
+    h_deltaEql->Fill(DeltaEql);
+    h_deltaEq->Fill(DeltaEq);
+    h_deltaEl->Fill(DeltaEl);
+   }
    std::cout << "Delta Eql = " << DeltaEql << std::endl;
    std::cout << "Delta Eq = " << DeltaEq << std::endl;
-  if (fTrueCCNC == 0 ) {
+   std::cout << "Delta El = " << DeltaEl << std::endl;
+   if (fTrueCCNC == 0 ) {
     numeroCC++;
     if(fMakeEdepdeltaeqlCC){
-    h_deltaEqlCC->Fill(DeltaEql);} 
+     h_deltaEqlCC->Fill(DeltaEql);} 
     if (IsContained == 1) {
-	numeroCC_cont++;
+  	numeroCC_cont++;
         if (fMakeEDepEQLCC) {
         h_eql_totEdep_CCcont->Fill(fTotEdep,E_QL ); }
         if(fMakeEdepdeltaeqlCC_cont){
         h_deltaEqlCC_cont->Fill(DeltaEql);}
-      }
+     }
    } 
-}  
-//delete after debugging is complete
-TF1 *fitgaus = new TF1 ("fitgaus","gaus",-0.5,0.5); 
-fitgaus->SetLineColor(kBlack);
+  }  
+  //delete after debugging is complete
+  TF1 *fitgaus = new TF1 ("fitgaus","gaus",-0.32,0.32);   
+  fitgaus->SetLineColor(kBlack);
 
-TF1 *fitgausCC = new TF1 ("fitgausCC","gaus",-0.5,0.5);
-fitgausCC->SetLineColor(kBlue);
+  TF1 *fitgausCC = new TF1 ("fitgausCC","gaus",-0.32,0.32);
+  fitgausCC->SetLineColor(kBlue);
 
-TF1 *fitgausCC_cont = new TF1 ("fitgausCC_cont","gaus",-0.4,0.4);
-fitgausCC_cont->SetLineColor(kRed);
+  TF1 *fitgausCC_cont = new TF1 ("fitgausCC_cont","gaus",-0.32,0.32);  
+  fitgausCC_cont->SetLineColor(kRed);
 
-if(fMakeEdepdeltaeql){
-h_deltaEql->Fit("fitgaus","R");}
-if(fMakeEdepdeltaeqlCC){
-h_deltaEqlCC->Fit("fitgausCC","R");}
-if(fMakeEdepdeltaeqlCC_cont){
-h_deltaEqlCC_cont->Fit("fitgausCC_cont","R");}
+  if(fMakeEdepdeltaeql){
+   h_deltaEql->Fit("fitgaus","R");}
+  if(fMakeEdepdeltaeqlCC){
+   h_deltaEqlCC->Fit("fitgausCC","R");}
+  if(fMakeEdepdeltaeqlCC_cont){
+   h_deltaEqlCC_cont->Fit("fitgausCC_cont","R");}
 
-   //////////////////////////////////////////////
-   // Write out the ChargeLightTree and clean up //
-   ///////////////////////////////////////////////
+  //////////////////////////////////////////////
+  // Write out the ChargeLightTree and clean up //
+  ///////////////////////////////////////////////
 
-   fChargeLightTree->Fill();
-   fTruePxallpart              .clear();
-   fTruePyallpart              .clear();
-   fTruePzallpart              .clear();
-   fTrueEallpart               .clear();
-   fTrueAllPDG                 .clear();
-   fEnergyDepositionVector     .clear();
-   fHitMultiplicity            .clear();
-   fHitCharge                  .clear();
-   fHitPeakTime                .clear();
-   fPointX                     .clear();
-   fPointY                     .clear();
-   fPointZ                     .clear();
-   fGammaScint                 .clear();
-   fStepLength		           .clear();
-   fStepLCumVector	           .clear();
-   fStepEdepCumVector          .clear();
-   fOpHitPeakTime  	           .clear();
-   fTrkLengthVector   	       .clear();
-   fSelTrkPointX	           .clear();
-   fSelTrkPointY	           .clear();
-   fSelTrkPointZ	           .clear();
-   fHitToXVector	           .clear();
-   fHitToYVector	           .clear(); 
-   fHitToZVector	           .clear();
-   fSpacePointX                .clear(); 
-   fSpacePointY                .clear(); 
-   fSpacePointZ                .clear(); 
-   fHitSPCharge                .clear();  
+  fChargeLightTree->Fill();
+  fTruePxallpart              .clear();
+  fTruePyallpart              .clear();
+  fTruePzallpart              .clear();
+  fTrueEallpart               .clear();
+  fTrueAllPDG                 .clear();
+  fEnergyDepositionVector     .clear();
+  fHitMultiplicity            .clear();
+  fHitCharge                  .clear();
+  fHitPeakTime                .clear();
+  fPointX                     .clear();
+  fPointY                     .clear();
+  fPointZ                     .clear();
+  fGammaScint                 .clear();
+  fStepLength		          .clear();
+  fStepLCumVector	          .clear();
+  fStepEdepCumVector          .clear();
+  fOpHitPeakTime  	          .clear();
+  fTrkLengthVector   	      .clear();
+  fSelTrkPointX	              .clear();
+  fSelTrkPointY	              .clear();
+  fSelTrkPointZ	              .clear();
+  fHitToXVector	              .clear();
+  fHitToYVector	              .clear(); 
+  fHitToZVector	              .clear();
+  fSpacePointX                .clear(); 
+  fSpacePointY                .clear(); 
+  fSpacePointZ                .clear(); 
+  fHitSPCharge                .clear();  
    
-  }
+ }
 
  //-----------------------------------------------------------------------
 
  void ChargeAndLightAna::endJob(){
  }
  
- float ChargeAndLightAna::GetFvisFromHisto(float x, float y, float z, float q){
+ float ChargeAndLightAna::GetFvisFromHisto(float x, float y, float z){
   
-   if (q == 0) return 0;
+   //if (q == 0) return 0;
   
    float binval=0;
-   float vis=0;
+   //float vis=0;
    Int_t ibin = 0;
    //std::cout << "Funzione F vis" << std::endl;
    //ibin = h3LightMap->FindBin(x, z, y);
@@ -1177,9 +1182,9 @@ h_deltaEqlCC_cont->Fit("fitgausCC_cont","R");}
     
     binval = h3LightMap->GetBinContent(ibin); 
     //std::cout<<" ---> f is: "<<binval<< std::endl;
-    vis = binval*q;
+    //vis = binval*q;
     //std::cout<<"vis = "<<vis<<std::endl;
-    return vis;
+    return binval;
   }
   
 } // namespace opdet
